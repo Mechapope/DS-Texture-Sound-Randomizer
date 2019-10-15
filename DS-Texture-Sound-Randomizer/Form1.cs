@@ -19,7 +19,7 @@ namespace DS_Texture_Sound_Randomizer
     public partial class Form1 : Form
     {
         public string gameDirectory = "";
-        string[] textureDirectories = { "chr", "font", "map", "menu", "other", "parts", "sfx" };
+        string[] textureDirectories = { "chr", "font", "map", "menu", "other", "parts", "sfx", "sound" };
         private Thread[] threads;
 
         public Form1()
@@ -156,12 +156,12 @@ namespace DS_Texture_Sound_Randomizer
         {
             threads = new Thread[4];
 
-            if(!ValidateInput())
+            if (!ValidateInput())
             {
                 return;
             }
 
-            if(!File.Exists(gameDirectory + @"\TextSoundRando\Backup\sfx\FRPG_SfxBnd_m18_01.ffxbnd"))
+            if (!File.Exists(gameDirectory + @"\TextSoundRando\Backup\sfx\FRPG_SfxBnd_m18_01.ffxbnd"))
             {
                 CreateBackups();
             }
@@ -181,10 +181,8 @@ namespace DS_Texture_Sound_Randomizer
             //RandomizeTextures();
             //RandomizeSounds();
 
-            //RepackTextures();
-            //RepackSounds();
-
-
+            RepackTextures();
+            RepackSounds();
         }
 
         private bool ValidateInput()
@@ -254,9 +252,15 @@ namespace DS_Texture_Sound_Randomizer
 
         private void UnpackTextures()
         {
-            //TODO only search specified game directories
-            var t = new TPUP(gameDirectory, gameDirectory + @"\TextSoundRando\Unpack\Textures", false, null, 4);
-            t.Start();
+
+            string[] dirr = new string[textureDirectories.Length];
+            for (int i = 0; i < textureDirectories.Length; i++)
+            {
+                dirr[i] = gameDirectory + "\\" + textureDirectories[i];
+            }
+
+            var t = new MPUP();
+            t.Unpack(dirr, 1, gameDirectory, gameDirectory + @"\TextSoundRando\Unpack\Textures");
         }
 
         private void UnpackSounds()
@@ -306,11 +310,14 @@ namespace DS_Texture_Sound_Randomizer
 
         private void RepackTextures()
         {
-            Dictionary<string, string> dammitk = new Dictionary<string, string>();
-            dammitk.Add(@"\chr\c1200\c1200_rat", @"\chr\c1200\c1200_rat");
+            string[] dirr = new string[textureDirectories.Length];
+            for (int i = 0; i < textureDirectories.Length; i++)
+            {
+                dirr[i] = gameDirectory + "\\" + textureDirectories[i];
+            }
 
-            var t = new TPUP(gameDirectory, gameDirectory + @"\TextSoundRando\Unpack\Textures", true, null, 1);
-            t.Start();
+            var t = new MPUP();
+            t.Repack(dirr, 1, gameDirectory, gameDirectory + @"\TextSoundRando\Unpack\Textures");
         }
 
         private void RepackSounds()
