@@ -19,8 +19,14 @@ namespace DS_Texture_Sound_Randomizer
     public partial class Form1 : Form
     {
         public string gameDirectory = "";
-        string[] textureDirectories = { "chr", "font", "map", "menu", "other", "parts", "sfx", "sound" };
+        string[] gameFileDirectories = { "chr", "font", "map", "menu", "other", "parts", "sfx", "sound" };
+        string[] validImageExtensions = { ".png", ".dds", ".jpg", ".tga" };
+        string[] validSoundExtensions = { ".mp3", ".wav" };
+        string[] uiTextureFiles = { "DSFont24_0000.dds", "DSFont24_0001.dds", "TalkFont24_0000.dds", "TalkFont24_0001.dds" };
         private Thread[] threads;
+        int seed = 0;
+
+        bool randomizeTextures, onlyCustomTextures, randomizeUiTextures, randomizeSounds, onlyCustomSounds;
 
         public Form1()
         {
@@ -173,13 +179,13 @@ namespace DS_Texture_Sound_Randomizer
             }
 
             //if last unpacked sound exists, ill just assume its all unpacked
-            if (!File.Exists(gameDirectory + @"\TextSoundRando\Unpack\Sounds\frpg_xm18\y1800.wav.mp3"))
+            if (!File.Exists(gameDirectory + @"\TextSoundRando\Unpack\Sounds\frpg_xm18.fsb\y1800.wav.mp3"))
             {
                 UnpackSounds();
             }
 
-            //RandomizeTextures();
-            //RandomizeSounds();
+            RandomizeTextures();
+            RandomizeSounds();
 
             RepackTextures();
             RepackSounds();
@@ -220,6 +226,14 @@ namespace DS_Texture_Sound_Randomizer
                 }
             }
 
+            seed = txtSeed.Text.GetHashCode();
+            
+            randomizeTextures = chkRandomizeTextures.Checked;
+            onlyCustomTextures = chkOnlyCustomTextures.Checked;
+            randomizeUiTextures = chkRandomizeUiTextures.Checked;
+            randomizeSounds = chkRandomizeSounds.Checked;
+            onlyCustomSounds = chkOnlyCustomSounds.Checked;
+
             return true;
         }
 
@@ -227,15 +241,14 @@ namespace DS_Texture_Sound_Randomizer
         {            
             string backupDirectory = gameDirectory + @"\TextSoundRando\backup\";
 
-            for (int i = 0; i < textureDirectories.Length; i++)
+            for (int i = 0; i < gameFileDirectories.Length; i++)
             {
-                //from https://stackoverflow.com/questions/58744/copy-the-entire-contents-of-a-directory-in-c-sharp
-                string sourceDirectory = gameDirectory + @"\" + textureDirectories[i];
-                string destinationDirectory = backupDirectory + textureDirectories[i];
+                string sourceDirectory = gameDirectory + "\\" + gameFileDirectories[i];
+                string destinationDirectory = backupDirectory + gameFileDirectories[i];
 
-                if (!Directory.Exists(gameDirectory + textureDirectories[i]))
+                if (!Directory.Exists(gameDirectory + gameFileDirectories[i]))
                 {
-                    Directory.CreateDirectory(backupDirectory + textureDirectories[i]);
+                    Directory.CreateDirectory(backupDirectory + gameFileDirectories[i]);
 
                     foreach (string dir in Directory.GetDirectories(sourceDirectory, "*", SearchOption.AllDirectories))
                     {
@@ -252,15 +265,99 @@ namespace DS_Texture_Sound_Randomizer
 
         private void UnpackTextures()
         {
-
-            string[] dirr = new string[textureDirectories.Length];
-            for (int i = 0; i < textureDirectories.Length; i++)
+            string[] directoriesToUnpack = new string[gameFileDirectories.Length];
+            for (int i = 0; i < gameFileDirectories.Length; i++)
             {
-                dirr[i] = gameDirectory + "\\" + textureDirectories[i];
+                directoriesToUnpack[i] = gameDirectory + "\\" + gameFileDirectories[i];
             }
 
             var t = new MPUP();
-            t.Unpack(dirr, 1, gameDirectory, gameDirectory + @"\TextSoundRando\Unpack\Textures");
+            t.Unpack(directoriesToUnpack, 4, gameDirectory, gameDirectory + @"\TextSoundRando\Unpack\Textures");
+        }
+
+        private void RandomizeTextures()
+        {
+            string inputFolder = gameDirectory + @"\TextSoundRando\Unpack\Textures";
+            List<string> pathsToSwap = GetTexturesToSwap();
+            Random r = new Random(seed);
+
+            foreach (string directory in Directory.EnumerateDirectories(inputFolder, "*", SearchOption.AllDirectories))
+            {
+                string tempDirectory = Path.Combine(gameDirectory + @"\TextSoundRando\Temp\Textures\", directory.Replace(gameDirectory + @"\TextSoundRando\Unpack\Textures\", ""));
+                Directory.CreateDirectory(tempDirectory);
+
+                foreach (string file in Directory.GetFiles(directory))
+                {
+                    if(CheckIsValidTextureForSwapping(file))
+                    {
+                        int rando = r.Next(pathsToSwap.Count);
+                        File.Copy(pathsToSwap[rando], tempDirectory + "\\" + Path.GetFileName(file));
+                        pathsToSwap.RemoveAt(rando);
+                    }
+                    else
+                    {
+                        //either not a valid image file or a normal/specular map - copy it to temp folder as is
+                        File.Copy(file, tempDirectory + "\\" + Path.GetFileName(file));
+                    }
+                }
+            }
+        }
+
+        private bool CheckIsValidTextureForSwapping(string fileName)
+        {
+            if(!File.Exists(fileName) || !validImageExtensions.Contains(Path.GetExtension(fileName)))
+            {
+                return false;
+            }
+
+            //normal/specular maps bad
+            if (Path.GetFileNameWithoutExtension(fileName).EndsWith("_n") && Path.GetFileNameWithoutExtension(fileName).EndsWith("_s"))
+            {                
+                return false;
+            }
+
+            //this file is fucked, thanks from
+            if(Path.GetFileName(fileName) == "DBGTEX_DETAIL.dds")
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private List<string> GetTexturesToSwap()
+        {
+            string[] textDirs = { "\\TextSoundRando\\Custom Textures", "\\TextSoundRando\\Unpack\\Textures" };
+            List<string> woof = new List<string>();
+
+            for (int i = 0; i < textDirs.Length; i++)
+            {
+                foreach (string directory in Directory.EnumerateDirectories(gameDirectory + textDirs[i], "*", SearchOption.AllDirectories))
+                {
+                    foreach (string file in Directory.GetFiles(directory))
+                    {
+                        //check this is a valid image file and not a normal/specular map
+                        if (CheckIsValidTextureForSwapping(file))
+                        {
+                            woof.Add(file);
+                        }
+                    }
+                }
+            }
+
+            return woof;
+        }
+
+        private void RepackTextures()
+        {
+            string[] directoriesToRepack = new string[gameFileDirectories.Length];
+            for (int i = 0; i < gameFileDirectories.Length; i++)
+            {
+                directoriesToRepack[i] = gameDirectory + "\\" + gameFileDirectories[i];
+            }
+
+            var t = new MPUP();
+            t.Repack(directoriesToRepack, 4, gameDirectory, gameDirectory + @"\TextSoundRando\Temp\Textures");
         }
 
         private void UnpackSounds()
@@ -290,15 +387,13 @@ namespace DS_Texture_Sound_Randomizer
             {
                 string unpackDirectory = gameDirectory + @"\TextSoundRando\Unpack\Sounds\" + Path.GetFileName(filepath);
 
-                Directory.CreateDirectory(unpackDirectory);
-                //copy the .fsb file too
-                File.Copy(filepath, unpackDirectory + "\\" + Path.GetFileName(filepath));               
+                Directory.CreateDirectory(unpackDirectory);         
 
                 ProcessStartInfo startInfo = new ProcessStartInfo();
                 startInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 startInfo.FileName = "cmd.exe";
                 startInfo.WorkingDirectory = gameDirectory + @"\TextSoundRando\Binaries\fsbext";
-                startInfo.Arguments = $"/C fsbext -d \"{unpackDirectory}\" \"{filepath}\"";
+                startInfo.Arguments = $"/C fsbext -m -d \"{unpackDirectory}\" -s \"{unpackDirectory + "\\files.dat"}\" \"{filepath}\"";
 
                 //run fsbext on each fsb file
                 using (Process process = Process.Start(startInfo))
@@ -308,21 +403,113 @@ namespace DS_Texture_Sound_Randomizer
             }
         }
 
-        private void RepackTextures()
+        private void RandomizeSounds()
         {
-            string[] dirr = new string[textureDirectories.Length];
-            for (int i = 0; i < textureDirectories.Length; i++)
+            string inputFolder = gameDirectory + @"\TextSoundRando\Unpack\Sounds";
+            List<string> pathsToSwap = GetSoundsToSwap();
+            Random r = new Random(seed);
+
+            foreach (string directory in Directory.EnumerateDirectories(inputFolder, "*", SearchOption.AllDirectories))
             {
-                dirr[i] = gameDirectory + "\\" + textureDirectories[i];
+                string tempDirectory = Path.Combine(gameDirectory + @"\TextSoundRando\Temp\Sounds\", Path.GetFileName(directory));
+                Directory.CreateDirectory(tempDirectory);
+
+                foreach (string file in Directory.GetFiles(directory))
+                {
+                    if (CheckIsValidSoundForSwapping(file))
+                    {
+                        int rando = r.Next(pathsToSwap.Count);
+                        File.Copy(pathsToSwap[rando], tempDirectory + "\\" + Path.GetFileName(file));
+                        pathsToSwap.RemoveAt(rando);
+                    }
+                    else
+                    {
+                        //not a sound file - copy it to directory as is
+                        File.Copy(file, tempDirectory + "\\" + Path.GetFileName(file));
+                    }
+                }
+            }
+        }
+
+        private List<string> GetSoundsToSwap()
+        {
+            string[] soundDirs = { "\\TextSoundRando\\Custom Sounds", "\\TextSoundRando\\Unpack\\Sounds" };
+            List<string> woof = new List<string>();
+
+            for (int i = 0; i < soundDirs.Length; i++)
+            {
+                foreach (string directory in Directory.EnumerateDirectories(gameDirectory + soundDirs[i], "*", SearchOption.AllDirectories))
+                {
+                    foreach (string file in Directory.GetFiles(directory))
+                    {
+                        //check this is a valid image file and not a normal/specular map
+                        if (CheckIsValidSoundForSwapping(file))
+                        {
+                            woof.Add(file);
+                        }
+                    }
+                }
             }
 
-            var t = new MPUP();
-            t.Repack(dirr, 1, gameDirectory, gameDirectory + @"\TextSoundRando\Unpack\Textures");
+            return woof;
+        }
+
+        private bool CheckIsValidSoundForSwapping(string fileName)
+        {
+            if (!File.Exists(fileName) || !validSoundExtensions.Contains(Path.GetExtension(fileName)))
+            {
+                return false;
+            }
+
+            //normal/specular maps bad
+            if (Path.GetFileName(fileName).Contains("blank"))
+            {
+                return false;
+            }
+
+            return true;
         }
 
         private void RepackSounds()
         {
+            ConcurrentQueue<string> filepaths = new ConcurrentQueue<string>();
 
+            foreach (string filepath in Directory.EnumerateDirectories(gameDirectory + "\\TextSoundRando\\Temp\\Sounds"))
+            {
+                filepaths.Enqueue(Path.GetFileName(filepath));
+            }
+
+            for (int i = 0; i < threads.Length; i++)
+            {
+                Thread thread = new Thread(() => RepackFSBs(filepaths));
+                threads[i] = thread;
+                thread.Start();
+            }
+
+            foreach (Thread thread in threads)
+                thread.Join();
+        }
+
+        private void RepackFSBs(ConcurrentQueue<string> filepaths)
+        {
+            //TODO check if fsbext actually sounds correct
+            string filepath;
+            while (filepaths.TryDequeue(out filepath))
+            {
+                string unpackDirectory = gameDirectory + @"\TextSoundRando\Temp\Sounds\" + Path.GetFileName(filepath);
+
+                ProcessStartInfo startInfo = new ProcessStartInfo();
+                startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                startInfo.FileName = "cmd.exe";
+                startInfo.WorkingDirectory = gameDirectory + @"\TextSoundRando\Binaries\fsbext";
+                startInfo.Arguments = $"/C fsbext -m -d \"{unpackDirectory}\" -s \"{unpackDirectory + "\\files.dat"}\" -r \"{unpackDirectory + "\\" + filepath}\"";
+
+                //run fsbext on each fsb file
+                using (Process process = Process.Start(startInfo))
+                {
+                    process.WaitForExit();
+                }
+            }
         }
     }
 }
