@@ -43,11 +43,14 @@
             this.chkOnlyCustomSounds = new System.Windows.Forms.CheckBox();
             this.btnOpenCustomTextureFolder = new System.Windows.Forms.Button();
             this.btnOpenCustomSoundFolder = new System.Windows.Forms.Button();
+            this.numThreads = new System.Windows.Forms.NumericUpDown();
+            this.lblThreads = new System.Windows.Forms.Label();
+            ((System.ComponentModel.ISupportInitialize)(this.numThreads)).BeginInit();
             this.SuspendLayout();
             // 
             // lblMessage
             // 
-            this.lblMessage.Location = new System.Drawing.Point(13, 285);
+            this.lblMessage.Location = new System.Drawing.Point(13, 306);
             this.lblMessage.Name = "lblMessage";
             this.lblMessage.Size = new System.Drawing.Size(428, 43);
             this.lblMessage.TabIndex = 35;
@@ -57,7 +60,7 @@
             // 
             // btnSubmit
             // 
-            this.btnSubmit.Location = new System.Drawing.Point(190, 259);
+            this.btnSubmit.Location = new System.Drawing.Point(190, 280);
             this.btnSubmit.Name = "btnSubmit";
             this.btnSubmit.Size = new System.Drawing.Size(75, 23);
             this.btnSubmit.TabIndex = 34;
@@ -112,7 +115,7 @@
             // chkRandomizeTextures
             // 
             this.chkRandomizeTextures.AutoSize = true;
-            this.chkRandomizeTextures.Location = new System.Drawing.Point(14, 155);
+            this.chkRandomizeTextures.Location = new System.Drawing.Point(14, 176);
             this.chkRandomizeTextures.Name = "chkRandomizeTextures";
             this.chkRandomizeTextures.Size = new System.Drawing.Size(119, 17);
             this.chkRandomizeTextures.TabIndex = 47;
@@ -123,7 +126,7 @@
             // chkFixMainSoundFile
             // 
             this.chkFixMainSoundFile.AutoSize = true;
-            this.chkFixMainSoundFile.Location = new System.Drawing.Point(329, 155);
+            this.chkFixMainSoundFile.Location = new System.Drawing.Point(329, 176);
             this.chkFixMainSoundFile.Name = "chkFixMainSoundFile";
             this.chkFixMainSoundFile.Size = new System.Drawing.Size(112, 17);
             this.chkFixMainSoundFile.TabIndex = 48;
@@ -135,7 +138,7 @@
             // 
             this.chkOnlyCustomTextures.AutoSize = true;
             this.chkOnlyCustomTextures.Enabled = false;
-            this.chkOnlyCustomTextures.Location = new System.Drawing.Point(29, 178);
+            this.chkOnlyCustomTextures.Location = new System.Drawing.Point(29, 199);
             this.chkOnlyCustomTextures.Name = "chkOnlyCustomTextures";
             this.chkOnlyCustomTextures.Size = new System.Drawing.Size(144, 17);
             this.chkOnlyCustomTextures.TabIndex = 49;
@@ -146,7 +149,7 @@
             // 
             this.chkRandomizeUiTextures.AutoSize = true;
             this.chkRandomizeUiTextures.Enabled = false;
-            this.chkRandomizeUiTextures.Location = new System.Drawing.Point(29, 201);
+            this.chkRandomizeUiTextures.Location = new System.Drawing.Point(29, 222);
             this.chkRandomizeUiTextures.Name = "chkRandomizeUiTextures";
             this.chkRandomizeUiTextures.Size = new System.Drawing.Size(133, 17);
             this.chkRandomizeUiTextures.TabIndex = 50;
@@ -156,7 +159,7 @@
             // chkRandomizeSounds
             // 
             this.chkRandomizeSounds.AutoSize = true;
-            this.chkRandomizeSounds.Location = new System.Drawing.Point(173, 155);
+            this.chkRandomizeSounds.Location = new System.Drawing.Point(173, 176);
             this.chkRandomizeSounds.Name = "chkRandomizeSounds";
             this.chkRandomizeSounds.Size = new System.Drawing.Size(116, 17);
             this.chkRandomizeSounds.TabIndex = 51;
@@ -168,7 +171,7 @@
             // 
             this.chkOnlyCustomSounds.AutoSize = true;
             this.chkOnlyCustomSounds.Enabled = false;
-            this.chkOnlyCustomSounds.Location = new System.Drawing.Point(188, 178);
+            this.chkOnlyCustomSounds.Location = new System.Drawing.Point(188, 199);
             this.chkOnlyCustomSounds.Name = "chkOnlyCustomSounds";
             this.chkOnlyCustomSounds.Size = new System.Drawing.Size(141, 17);
             this.chkOnlyCustomSounds.TabIndex = 52;
@@ -195,11 +198,29 @@
             this.btnOpenCustomSoundFolder.UseVisualStyleBackColor = true;
             this.btnOpenCustomSoundFolder.Click += new System.EventHandler(this.btnOpenCustomSoundFolder_Click);
             // 
+            // numThreads
+            // 
+            this.numThreads.Location = new System.Drawing.Point(294, 133);
+            this.numThreads.Name = "numThreads";
+            this.numThreads.Size = new System.Drawing.Size(38, 20);
+            this.numThreads.TabIndex = 55;
+            // 
+            // lblThreads
+            // 
+            this.lblThreads.AutoSize = true;
+            this.lblThreads.Location = new System.Drawing.Point(187, 135);
+            this.lblThreads.Name = "lblThreads";
+            this.lblThreads.Size = new System.Drawing.Size(101, 13);
+            this.lblThreads.TabIndex = 56;
+            this.lblThreads.Text = "Number of Threads:";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(455, 341);
+            this.ClientSize = new System.Drawing.Size(455, 361);
+            this.Controls.Add(this.lblThreads);
+            this.Controls.Add(this.numThreads);
             this.Controls.Add(this.btnOpenCustomSoundFolder);
             this.Controls.Add(this.btnOpenCustomTextureFolder);
             this.Controls.Add(this.chkOnlyCustomSounds);
@@ -218,6 +239,7 @@
             this.Name = "Form1";
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.Form1_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.numThreads)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -240,6 +262,8 @@
         private System.Windows.Forms.CheckBox chkOnlyCustomSounds;
         private System.Windows.Forms.Button btnOpenCustomTextureFolder;
         private System.Windows.Forms.Button btnOpenCustomSoundFolder;
+        private System.Windows.Forms.NumericUpDown numThreads;
+        private System.Windows.Forms.Label lblThreads;
     }
 }
 
