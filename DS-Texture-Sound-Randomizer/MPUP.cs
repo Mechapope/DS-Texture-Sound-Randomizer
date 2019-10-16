@@ -328,6 +328,7 @@ namespace DS_Texture_Sound_Randomizer
                 UseShellExecute = false,
                 RedirectStandardOutput = true
             };
+
             Process texconv = Process.Start(startInfo);
             texconv.WaitForExit();
 
