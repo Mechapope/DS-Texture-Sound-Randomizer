@@ -407,7 +407,7 @@ namespace DS_Texture_Sound_Randomizer
         private void UnpackSounds()
         {
             ConcurrentQueue<string> filepaths = new ConcurrentQueue<string>();
-            Thread[] threads = new Thread[threads];
+            Thread[] threads = new Thread[threadCount];
 
             foreach (string filepath in Directory.EnumerateFiles(gameDirectory + "\\sound", "*.fsb"))
             {
@@ -529,7 +529,7 @@ namespace DS_Texture_Sound_Randomizer
         private void RepackSounds()
         {
             ConcurrentQueue<string> filepaths = new ConcurrentQueue<string>();
-            Thread[] threads = new Thread[threads];
+            Thread[] threads = new Thread[threadCount];
 
             foreach (string filepath in Directory.EnumerateDirectories(gameDirectory + "\\TextSoundRando\\Temp\\Sounds"))
             {
