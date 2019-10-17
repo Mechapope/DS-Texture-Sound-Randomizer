@@ -172,6 +172,7 @@ namespace DS_Texture_Sound_Randomizer
                     string decompressedExtension = Path.GetExtension(filepath);
                     if (decompressedExtension == ".dcx")
                         decompressedExtension = Path.GetExtension(Path.GetFileNameWithoutExtension(filepath));
+
                     if (validExtensions.Contains(decompressedExtension))
                     {
                         filepaths.Enqueue(filepath);
@@ -221,7 +222,9 @@ namespace DS_Texture_Sound_Randomizer
                         byte[] tpfBytes = tpf.Write();
                         if (dcx)
                             tpfBytes = DCX.Compress(tpfBytes, DCX.Type.DarkSouls1);
-                    break;
+                        File.WriteAllBytes(absolute, tpfBytes);
+
+                        break;
 
                     case ".chrbnd":
                     case ".ffxbnd":
@@ -245,6 +248,7 @@ namespace DS_Texture_Sound_Randomizer
                         {
                             bndBytes = DCX.Compress(bndBytes, DCX.Type.DarkSouls1);
                         }
+                        File.WriteAllBytes(absolute, bndBytes);
 
                         break;
                 }

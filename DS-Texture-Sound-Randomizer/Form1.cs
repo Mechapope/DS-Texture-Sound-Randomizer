@@ -25,6 +25,8 @@ namespace DS_Texture_Sound_Randomizer
         string[] uiTextureFiles = { "DSFont24_0000.dds", "DSFont24_0001.dds", "TalkFont24_0000.dds", "TalkFont24_0001.dds" };
         int seed = 0;
         int threadCount;
+        bool isBackupsExist = false;
+        bool isGameUnpacked = false;
 
         bool randomizeTextures, onlyCustomTextures, randomizeUiTextures, randomizeSounds, onlyCustomSounds;
 
@@ -45,10 +47,22 @@ namespace DS_Texture_Sound_Randomizer
                 if (!File.Exists(gameDirectory + "\\param\\GameParam\\GameParam.parambnd"))
                 {
                     //user hasn't unpacked their game
-                    lblMessage.Text = "You don't seem to have an unpacked Dark Souls installation. Please run UDSFM and come back :)";
-                    lblMessage.Visible = true;
-                    lblMessage.ForeColor = Color.Red;
+                    LogError("You don't seem to have an unpacked Dark Souls installation. Please run UDSFM and come back :)");
                 }
+            }
+
+            if (File.Exists(gameDirectory + @"\TextSoundRando\Backup\sfx\FRPG_SfxBnd_m18_01.ffxbnd"))
+            {
+                isBackupsExist = true;
+                btnCreateBackups.Enabled = false;
+                LogMessage("Backups found.");
+            }
+
+            if (File.Exists(gameDirectory + @"\TextSoundRando\Unpack\Sounds\frpg_xm18.fsb\y1800.wav.mp3"))
+            {
+                isGameUnpacked = true;
+                btnExtractFiles.Enabled = false;
+                LogMessage("Extracted game files found.");
             }
 
             int cores = Environment.ProcessorCount;
@@ -70,19 +84,28 @@ namespace DS_Texture_Sound_Randomizer
                 txtGamePath.Text = dialog.FileName;
                 gameDirectory = dialog.FileName;
 
-                lblMessage.Text = "";
-                lblMessage.Visible = true;
-
                 if (!File.Exists(gameDirectory + "\\DARKSOULS.exe"))
                 {
-                    lblMessage.Text = "Not a valid Data directory!";
-                    lblMessage.ForeColor = Color.Red;
+                    LogError("Not a valid Data directory!");
                 }
                 else if (!File.Exists(gameDirectory + "\\param\\GameParam\\GameParam.parambnd"))
                 {
                     //user hasn't unpacked their game
-                    lblMessage.Text = "You don't seem to have an unpacked Dark Souls installation. Please run UDSFM and come back :)";
-                    lblMessage.ForeColor = Color.Red;
+                    LogError("You don't seem to have an unpacked Dark Souls installation. Please run UDSFM and come back :)");
+                }
+
+                if (File.Exists(gameDirectory + @"\TextSoundRando\Backup\sfx\FRPG_SfxBnd_m18_01.ffxbnd"))
+                {
+                    isBackupsExist = true;
+                    btnCreateBackups.Enabled = false;
+                    LogMessage("Backups found.");
+                }
+
+                if (File.Exists(gameDirectory + @"\TextSoundRando\Unpack\Sounds\frpg_xm18.fsb\y1800.wav.mp3"))
+                {
+                    isGameUnpacked = true;
+                    btnExtractFiles.Enabled = false;
+                    LogMessage("Extracted game files found.");
                 }
             }
         }
@@ -132,9 +155,11 @@ namespace DS_Texture_Sound_Randomizer
         {
             if(txtGamePath.Text == "")
             {
-                lblMessage.Text = "Please set the game path first";
-                lblMessage.Visible = true;
-                lblMessage.ForeColor = Color.Red;
+                LogError("Please set your game path first.");
+            }
+            else if (!File.Exists(gameDirectory + "\\DARKSOULS.exe"))
+            {
+                LogError("Not a valid Data directory.");
             }
             else
             {
@@ -151,9 +176,11 @@ namespace DS_Texture_Sound_Randomizer
         {
             if (txtGamePath.Text == "")
             {
-                lblMessage.Text = "Please set the game path first";
-                lblMessage.Visible = true;
-                lblMessage.ForeColor = Color.Red;
+                LogError("Please set your game path first.");
+            }
+            else if (!File.Exists(gameDirectory + "\\DARKSOULS.exe"))
+            {
+                LogError("Not a valid Data directory.");
             }
             else
             {
@@ -164,6 +191,55 @@ namespace DS_Texture_Sound_Randomizer
 
                 Process.Start(gameDirectory + @"\TextSoundRando\Custom Sounds");
             }
+        }
+
+        private void btnCreateBackups_Click(object sender, EventArgs e)
+        {
+            LogMessage("Creating backups.");
+
+            Thread t = new Thread(CreateBackups);
+            t.Start();
+            t.Join();
+
+            LogMessage("Backups created.");
+            isBackupsExist = true;
+            btnCreateBackups.Enabled = false;
+
+        }
+
+        private void btnRestoreBackups_Click(object sender, EventArgs e)
+        {
+            LogMessage("Restoring backups.");
+
+            //Thread t = new Thread(CreateBackups);
+            //t.Start();
+            //t.Join();
+
+            LogMessage("Backups restored.");
+        }
+
+        private void btnExtractFiles_Click(object sender, EventArgs e)
+        {
+            LogMessage("Extracting textures.");
+
+            threadCount = (int)numThreads.Value;
+
+            Thread t2 = new Thread(UnpackTextures);
+            t2.Start();
+            t2.Join();
+
+            LogMessage("Textures extracted.");
+            LogMessage("Extracting sounds.");
+
+            Thread t = new Thread(UnpackSounds);
+            t.Start();
+            t.Join();
+
+            LogMessage("Sounds extracted.");
+            LogMessage("Extracting game files complete.");
+
+            isGameUnpacked = true;
+            btnExtractFiles.Enabled = false;
         }
 
         private void btnSubmit_Click(object sender, EventArgs e)
@@ -179,31 +255,26 @@ namespace DS_Texture_Sound_Randomizer
                 return;
             }
 
-            if (!File.Exists(gameDirectory + @"\TextSoundRando\Backup\sfx\FRPG_SfxBnd_m18_01.ffxbnd"))
+            if (!isBackupsExist)
             {
-                CreateBackups();
+                LogError("Create a backup first.");
+                return;
+            }
+
+            if(!isGameUnpacked)
+            {
+                LogError("Unpack your game files first.");
+                return;
             }
 
             if(randomizeTextures)
             {
-                //if last unpacked texture exists, ill just assume its all unpacked
-                if (!File.Exists(gameDirectory + @"\TextSoundRando\Unpack\Textures\sfx\FRPG_SfxBnd_m18_01\s13510.dds"))
-                {
-                    UnpackTextures();
-                }
-
                 RandomizeTextures();
                 RepackTextures();
             }
 
             if(randomizeSounds)
-            {
-                //if last unpacked sound exists, ill just assume its all unpacked
-                if (!File.Exists(gameDirectory + @"\TextSoundRando\Unpack\Sounds\frpg_xm18.fsb\y1800.wav.mp3"))
-                {
-                    UnpackSounds();
-                }
-
+            { 
                 RandomizeSounds();
                 RepackSounds();
             }
@@ -219,22 +290,15 @@ namespace DS_Texture_Sound_Randomizer
             //check that entered path is valid
             gameDirectory = txtGamePath.Text;
 
-            //reset message label
-            lblMessage.Text = "";
-            lblMessage.ForeColor = new Color();
-            lblMessage.Visible = true;
-
             if (!File.Exists(gameDirectory + "\\DARKSOULS.exe"))
             {
-                lblMessage.Text = "Not a valid Data directory!";
-                lblMessage.ForeColor = Color.Red;
+                LogError("Not a valid Data directory!");
                 return false;
             }
             else if (!File.Exists(gameDirectory + "\\param\\GameParam\\GameParam.parambnd"))
             {
                 //user hasn't unpacked their game
-                lblMessage.Text = "You don't seem to have an unpacked Dark Souls installation. Please run UDSFM and come back :)";
-                lblMessage.ForeColor = Color.Red;
+                LogError("You don't seem to have an unpacked Dark Souls installation. Please run UDSFM and come back :)");
                 return false;
             }
 
@@ -263,8 +327,16 @@ namespace DS_Texture_Sound_Randomizer
         private void ClearTempFolder()
         {
             //empty temp directories and re-create empty
-            Directory.Delete(gameDirectory + "\\TextSoundRando\\Temp\\Sounds", true);
-            Directory.Delete(gameDirectory + "\\TextSoundRando\\Temp\\Textures", true);
+            if(Directory.Exists(gameDirectory + "\\TextSoundRando\\Temp\\Textures"))
+            {
+                Directory.Delete(gameDirectory + "\\TextSoundRando\\Temp\\Textures", true);
+            }
+
+            if (Directory.Exists(gameDirectory + "\\TextSoundRando\\Temp\\Sounds"))
+            {
+                Directory.Delete(gameDirectory + "\\TextSoundRando\\Temp\\Sounds", true);
+            }           
+            
             Directory.CreateDirectory(gameDirectory + "\\TextSoundRando\\Temp\\Sounds");
             Directory.CreateDirectory(gameDirectory + "\\TextSoundRando\\Temp\\Textures");
         }
@@ -292,11 +364,27 @@ namespace DS_Texture_Sound_Randomizer
                         File.Copy(file_name, Path.Combine(destinationDirectory, file_name.Substring(sourceDirectory.Length + 1)));
                     }
                 }
-            }            
+            }
+        }
+
+        private void RestoreBackups()
+        {
+            string backupDirectory = gameDirectory + @"\TextSoundRando\backup\";
+
+            foreach (var item in Directory.EnumerateFiles(backupDirectory, "*", SearchOption.AllDirectories))
+            {
+                File.Copy(item, item.Replace(@"\TextSoundRando\backup\", ""), true);
+            }
         }
 
         private void UnpackTextures()
         {
+            string unpackDirectory = gameDirectory + "\\TextSoundRando\\Unpack\\Textures";
+            if (!Directory.Exists(unpackDirectory))
+            {
+                Directory.CreateDirectory(unpackDirectory);
+            }
+
             string[] directoriesToUnpack = new string[gameFileDirectories.Length];
             for (int i = 0; i < gameFileDirectories.Length; i++)
             {
@@ -304,7 +392,7 @@ namespace DS_Texture_Sound_Randomizer
             }
 
             var t = new MPUP();
-            t.Unpack(directoriesToUnpack, threadCount, gameDirectory, gameDirectory + @"\TextSoundRando\Unpack\Textures");
+            t.Unpack(directoriesToUnpack, threadCount, gameDirectory, unpackDirectory);
         }
 
         private void RandomizeTextures()
@@ -406,6 +494,12 @@ namespace DS_Texture_Sound_Randomizer
 
         private void UnpackSounds()
         {
+            string unpackDirectory = gameDirectory + "\\TextSoundRando\\Unpack\\Sounds";
+            if (!Directory.Exists(unpackDirectory))
+            {
+                Directory.CreateDirectory(unpackDirectory);
+            }
+
             ConcurrentQueue<string> filepaths = new ConcurrentQueue<string>();
             Thread[] threads = new Thread[threadCount];
 
@@ -495,15 +589,6 @@ namespace DS_Texture_Sound_Randomizer
                 foreach (string directory in Directory.EnumerateDirectories(gameDirectory + soundDirs[i], "*", SearchOption.AllDirectories))
                 {
                     sounds.AddRange(Directory.GetFiles(directory).Where(s => CheckIsValidSoundForSwapping(s)));
-
-                    //foreach (string file in Directory.GetFiles(directory))
-                    //{
-                    //    //check this is a valid image file and not a normal/specular map
-                    //    if (CheckIsValidSoundForSwapping(file))
-                    //    {
-                    //        sounds.Add(file);
-                    //    }
-                    //}
                 }
             }
 
@@ -573,6 +658,24 @@ namespace DS_Texture_Sound_Randomizer
                     process.WaitForExit();
                 }
             }
+        }
+
+        private void LogMessage(string message)
+        {
+            if (rtfLog.Text.Length > 0)
+                rtfLog.AppendText("\n");
+
+            rtfLog.AppendText(message);
+        }
+
+        private void LogError(string message)
+        {
+            if (rtfLog.Text.Length > 0)
+                rtfLog.AppendText("\n");
+
+            rtfLog.Select(rtfLog.TextLength, 0);
+            rtfLog.SelectionColor = Color.Red;
+            rtfLog.AppendText(message);
         }
     }
 }

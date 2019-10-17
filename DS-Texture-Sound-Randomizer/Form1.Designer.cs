@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.lblMessage = new System.Windows.Forms.Label();
             this.btnSubmit = new System.Windows.Forms.Button();
             this.btnGamePathSelect = new System.Windows.Forms.Button();
             this.txtGamePath = new System.Windows.Forms.TextBox();
@@ -45,24 +44,20 @@
             this.btnOpenCustomSoundFolder = new System.Windows.Forms.Button();
             this.numThreads = new System.Windows.Forms.NumericUpDown();
             this.lblThreads = new System.Windows.Forms.Label();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.btnCreateBackups = new System.Windows.Forms.Button();
+            this.btnRestoreBackups = new System.Windows.Forms.Button();
+            this.btnExtractFiles = new System.Windows.Forms.Button();
+            this.rtfLog = new System.Windows.Forms.RichTextBox();
             ((System.ComponentModel.ISupportInitialize)(this.numThreads)).BeginInit();
+            this.groupBox1.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // lblMessage
-            // 
-            this.lblMessage.Location = new System.Drawing.Point(13, 306);
-            this.lblMessage.Name = "lblMessage";
-            this.lblMessage.Size = new System.Drawing.Size(428, 43);
-            this.lblMessage.TabIndex = 35;
-            this.lblMessage.Text = "lblMessage";
-            this.lblMessage.TextAlign = System.Drawing.ContentAlignment.TopCenter;
-            this.lblMessage.Visible = false;
             // 
             // btnSubmit
             // 
-            this.btnSubmit.Location = new System.Drawing.Point(190, 280);
+            this.btnSubmit.Location = new System.Drawing.Point(12, 251);
             this.btnSubmit.Name = "btnSubmit";
-            this.btnSubmit.Size = new System.Drawing.Size(75, 23);
+            this.btnSubmit.Size = new System.Drawing.Size(464, 30);
             this.btnSubmit.TabIndex = 34;
             this.btnSubmit.Text = "Go";
             this.btnSubmit.UseVisualStyleBackColor = true;
@@ -70,9 +65,9 @@
             // 
             // btnGamePathSelect
             // 
-            this.btnGamePathSelect.Location = new System.Drawing.Point(412, 12);
+            this.btnGamePathSelect.Location = new System.Drawing.Point(447, 12);
             this.btnGamePathSelect.Name = "btnGamePathSelect";
-            this.btnGamePathSelect.Size = new System.Drawing.Size(28, 20);
+            this.btnGamePathSelect.Size = new System.Drawing.Size(29, 21);
             this.btnGamePathSelect.TabIndex = 33;
             this.btnGamePathSelect.Text = "...";
             this.btnGamePathSelect.UseVisualStyleBackColor = true;
@@ -80,7 +75,7 @@
             // 
             // txtGamePath
             // 
-            this.txtGamePath.Location = new System.Drawing.Point(78, 12);
+            this.txtGamePath.Location = new System.Drawing.Point(113, 13);
             this.txtGamePath.Name = "txtGamePath";
             this.txtGamePath.Size = new System.Drawing.Size(328, 20);
             this.txtGamePath.TabIndex = 29;
@@ -88,7 +83,7 @@
             // lblGamePath
             // 
             this.lblGamePath.AutoSize = true;
-            this.lblGamePath.Location = new System.Drawing.Point(9, 16);
+            this.lblGamePath.Location = new System.Drawing.Point(47, 16);
             this.lblGamePath.Margin = new System.Windows.Forms.Padding(0);
             this.lblGamePath.Name = "lblGamePath";
             this.lblGamePath.Size = new System.Drawing.Size(63, 13);
@@ -99,15 +94,15 @@
             // 
             this.lblSeed.AutoSize = true;
             this.lblSeed.Cursor = System.Windows.Forms.Cursors.Arrow;
-            this.lblSeed.Location = new System.Drawing.Point(37, 38);
+            this.lblSeed.Location = new System.Drawing.Point(27, 42);
             this.lblSeed.Name = "lblSeed";
-            this.lblSeed.Size = new System.Drawing.Size(35, 13);
+            this.lblSeed.Size = new System.Drawing.Size(83, 13);
             this.lblSeed.TabIndex = 30;
-            this.lblSeed.Text = "Seed:";
+            this.lblSeed.Text = "Seed (Optional):";
             // 
             // txtSeed
             // 
-            this.txtSeed.Location = new System.Drawing.Point(78, 38);
+            this.txtSeed.Location = new System.Drawing.Point(114, 39);
             this.txtSeed.Name = "txtSeed";
             this.txtSeed.Size = new System.Drawing.Size(362, 20);
             this.txtSeed.TabIndex = 31;
@@ -115,7 +110,7 @@
             // chkRandomizeTextures
             // 
             this.chkRandomizeTextures.AutoSize = true;
-            this.chkRandomizeTextures.Location = new System.Drawing.Point(14, 176);
+            this.chkRandomizeTextures.Location = new System.Drawing.Point(19, 19);
             this.chkRandomizeTextures.Name = "chkRandomizeTextures";
             this.chkRandomizeTextures.Size = new System.Drawing.Size(119, 17);
             this.chkRandomizeTextures.TabIndex = 47;
@@ -126,7 +121,7 @@
             // chkFixMainSoundFile
             // 
             this.chkFixMainSoundFile.AutoSize = true;
-            this.chkFixMainSoundFile.Location = new System.Drawing.Point(329, 176);
+            this.chkFixMainSoundFile.Location = new System.Drawing.Point(334, 19);
             this.chkFixMainSoundFile.Name = "chkFixMainSoundFile";
             this.chkFixMainSoundFile.Size = new System.Drawing.Size(112, 17);
             this.chkFixMainSoundFile.TabIndex = 48;
@@ -138,7 +133,7 @@
             // 
             this.chkOnlyCustomTextures.AutoSize = true;
             this.chkOnlyCustomTextures.Enabled = false;
-            this.chkOnlyCustomTextures.Location = new System.Drawing.Point(29, 199);
+            this.chkOnlyCustomTextures.Location = new System.Drawing.Point(33, 42);
             this.chkOnlyCustomTextures.Name = "chkOnlyCustomTextures";
             this.chkOnlyCustomTextures.Size = new System.Drawing.Size(144, 17);
             this.chkOnlyCustomTextures.TabIndex = 49;
@@ -149,7 +144,7 @@
             // 
             this.chkRandomizeUiTextures.AutoSize = true;
             this.chkRandomizeUiTextures.Enabled = false;
-            this.chkRandomizeUiTextures.Location = new System.Drawing.Point(29, 222);
+            this.chkRandomizeUiTextures.Location = new System.Drawing.Point(33, 65);
             this.chkRandomizeUiTextures.Name = "chkRandomizeUiTextures";
             this.chkRandomizeUiTextures.Size = new System.Drawing.Size(133, 17);
             this.chkRandomizeUiTextures.TabIndex = 50;
@@ -159,7 +154,7 @@
             // chkRandomizeSounds
             // 
             this.chkRandomizeSounds.AutoSize = true;
-            this.chkRandomizeSounds.Location = new System.Drawing.Point(173, 176);
+            this.chkRandomizeSounds.Location = new System.Drawing.Point(178, 19);
             this.chkRandomizeSounds.Name = "chkRandomizeSounds";
             this.chkRandomizeSounds.Size = new System.Drawing.Size(116, 17);
             this.chkRandomizeSounds.TabIndex = 51;
@@ -171,7 +166,7 @@
             // 
             this.chkOnlyCustomSounds.AutoSize = true;
             this.chkOnlyCustomSounds.Enabled = false;
-            this.chkOnlyCustomSounds.Location = new System.Drawing.Point(188, 199);
+            this.chkOnlyCustomSounds.Location = new System.Drawing.Point(192, 42);
             this.chkOnlyCustomSounds.Name = "chkOnlyCustomSounds";
             this.chkOnlyCustomSounds.Size = new System.Drawing.Size(141, 17);
             this.chkOnlyCustomSounds.TabIndex = 52;
@@ -180,9 +175,9 @@
             // 
             // btnOpenCustomTextureFolder
             // 
-            this.btnOpenCustomTextureFolder.Location = new System.Drawing.Point(105, 73);
+            this.btnOpenCustomTextureFolder.Location = new System.Drawing.Point(297, 198);
             this.btnOpenCustomTextureFolder.Name = "btnOpenCustomTextureFolder";
-            this.btnOpenCustomTextureFolder.Size = new System.Drawing.Size(111, 46);
+            this.btnOpenCustomTextureFolder.Size = new System.Drawing.Size(85, 46);
             this.btnOpenCustomTextureFolder.TabIndex = 53;
             this.btnOpenCustomTextureFolder.Text = "Open Custom Texture Folder";
             this.btnOpenCustomTextureFolder.UseVisualStyleBackColor = true;
@@ -190,9 +185,9 @@
             // 
             // btnOpenCustomSoundFolder
             // 
-            this.btnOpenCustomSoundFolder.Location = new System.Drawing.Point(238, 73);
+            this.btnOpenCustomSoundFolder.Location = new System.Drawing.Point(392, 199);
             this.btnOpenCustomSoundFolder.Name = "btnOpenCustomSoundFolder";
-            this.btnOpenCustomSoundFolder.Size = new System.Drawing.Size(111, 46);
+            this.btnOpenCustomSoundFolder.Size = new System.Drawing.Size(85, 46);
             this.btnOpenCustomSoundFolder.TabIndex = 54;
             this.btnOpenCustomSoundFolder.Text = "Open Custom Sound Folder";
             this.btnOpenCustomSoundFolder.UseVisualStyleBackColor = true;
@@ -200,36 +195,99 @@
             // 
             // numThreads
             // 
-            this.numThreads.Location = new System.Drawing.Point(294, 133);
+            this.numThreads.Location = new System.Drawing.Point(114, 69);
+            this.numThreads.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
             this.numThreads.Name = "numThreads";
-            this.numThreads.Size = new System.Drawing.Size(38, 20);
+            this.numThreads.Size = new System.Drawing.Size(362, 20);
             this.numThreads.TabIndex = 55;
+            this.numThreads.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
             // 
             // lblThreads
             // 
             this.lblThreads.AutoSize = true;
-            this.lblThreads.Location = new System.Drawing.Point(187, 135);
+            this.lblThreads.Location = new System.Drawing.Point(9, 71);
             this.lblThreads.Name = "lblThreads";
             this.lblThreads.Size = new System.Drawing.Size(101, 13);
             this.lblThreads.TabIndex = 56;
             this.lblThreads.Text = "Number of Threads:";
             // 
+            // groupBox1
+            // 
+            this.groupBox1.Controls.Add(this.chkRandomizeTextures);
+            this.groupBox1.Controls.Add(this.chkFixMainSoundFile);
+            this.groupBox1.Controls.Add(this.chkOnlyCustomTextures);
+            this.groupBox1.Controls.Add(this.chkRandomizeUiTextures);
+            this.groupBox1.Controls.Add(this.chkRandomizeSounds);
+            this.groupBox1.Controls.Add(this.chkOnlyCustomSounds);
+            this.groupBox1.Location = new System.Drawing.Point(12, 99);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(464, 93);
+            this.groupBox1.TabIndex = 57;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "Options";
+            // 
+            // btnCreateBackups
+            // 
+            this.btnCreateBackups.Location = new System.Drawing.Point(12, 199);
+            this.btnCreateBackups.Name = "btnCreateBackups";
+            this.btnCreateBackups.Size = new System.Drawing.Size(85, 46);
+            this.btnCreateBackups.TabIndex = 58;
+            this.btnCreateBackups.Text = "Create Backups";
+            this.btnCreateBackups.UseVisualStyleBackColor = true;
+            this.btnCreateBackups.Click += new System.EventHandler(this.btnCreateBackups_Click);
+            // 
+            // btnRestoreBackups
+            // 
+            this.btnRestoreBackups.Location = new System.Drawing.Point(107, 199);
+            this.btnRestoreBackups.Name = "btnRestoreBackups";
+            this.btnRestoreBackups.Size = new System.Drawing.Size(85, 46);
+            this.btnRestoreBackups.TabIndex = 59;
+            this.btnRestoreBackups.Text = "Restore Backups";
+            this.btnRestoreBackups.UseVisualStyleBackColor = true;
+            this.btnRestoreBackups.Click += new System.EventHandler(this.btnRestoreBackups_Click);
+            // 
+            // btnExtractFiles
+            // 
+            this.btnExtractFiles.Location = new System.Drawing.Point(202, 199);
+            this.btnExtractFiles.Name = "btnExtractFiles";
+            this.btnExtractFiles.Size = new System.Drawing.Size(85, 46);
+            this.btnExtractFiles.TabIndex = 60;
+            this.btnExtractFiles.Text = "Extract Game Files";
+            this.btnExtractFiles.UseVisualStyleBackColor = true;
+            this.btnExtractFiles.Click += new System.EventHandler(this.btnExtractFiles_Click);
+            // 
+            // rtfLog
+            // 
+            this.rtfLog.Location = new System.Drawing.Point(12, 287);
+            this.rtfLog.Name = "rtfLog";
+            this.rtfLog.ReadOnly = true;
+            this.rtfLog.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.ForcedVertical;
+            this.rtfLog.Size = new System.Drawing.Size(464, 307);
+            this.rtfLog.TabIndex = 61;
+            this.rtfLog.Text = "";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(455, 361);
+            this.ClientSize = new System.Drawing.Size(490, 606);
+            this.Controls.Add(this.rtfLog);
+            this.Controls.Add(this.btnExtractFiles);
+            this.Controls.Add(this.btnRestoreBackups);
+            this.Controls.Add(this.btnCreateBackups);
+            this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.lblThreads);
             this.Controls.Add(this.numThreads);
             this.Controls.Add(this.btnOpenCustomSoundFolder);
             this.Controls.Add(this.btnOpenCustomTextureFolder);
-            this.Controls.Add(this.chkOnlyCustomSounds);
-            this.Controls.Add(this.chkRandomizeSounds);
-            this.Controls.Add(this.chkRandomizeUiTextures);
-            this.Controls.Add(this.chkOnlyCustomTextures);
-            this.Controls.Add(this.chkFixMainSoundFile);
-            this.Controls.Add(this.chkRandomizeTextures);
-            this.Controls.Add(this.lblMessage);
             this.Controls.Add(this.btnSubmit);
             this.Controls.Add(this.btnGamePathSelect);
             this.Controls.Add(this.txtGamePath);
@@ -240,14 +298,14 @@
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.numThreads)).EndInit();
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
         }
 
         #endregion
-
-        private System.Windows.Forms.Label lblMessage;
         private System.Windows.Forms.Button btnSubmit;
         private System.Windows.Forms.Button btnGamePathSelect;
         private System.Windows.Forms.TextBox txtGamePath;
@@ -264,6 +322,11 @@
         private System.Windows.Forms.Button btnOpenCustomSoundFolder;
         private System.Windows.Forms.NumericUpDown numThreads;
         private System.Windows.Forms.Label lblThreads;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.Button btnCreateBackups;
+        private System.Windows.Forms.Button btnRestoreBackups;
+        private System.Windows.Forms.Button btnExtractFiles;
+        private System.Windows.Forms.RichTextBox rtfLog;
     }
 }
 
