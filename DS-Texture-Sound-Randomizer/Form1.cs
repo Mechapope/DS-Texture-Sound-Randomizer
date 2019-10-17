@@ -52,6 +52,7 @@ namespace DS_Texture_Sound_Randomizer
             }
 
             int cores = Environment.ProcessorCount;
+
             if (cores > 4)
                 numThreads.Value = cores - 2;
             else if (cores > 1)
@@ -85,7 +86,6 @@ namespace DS_Texture_Sound_Randomizer
                 }
             }
         }
-
 
         private void chkRandomizeTextures_CheckedChanged(object sender, EventArgs e)
         {
@@ -263,10 +263,10 @@ namespace DS_Texture_Sound_Randomizer
         private void ClearTempFolder()
         {
             //empty temp directories and re-create empty
-            Directory.Delete(gameDirectory + "\\Unpack\\Sounds", true);
-            Directory.Delete(gameDirectory + "\\Unpack\\Textures", true);
-            Directory.CreateDirectory(gameDirectory + "\\Unpack\\Sounds");
-            Directory.CreateDirectory(gameDirectory + "\\Unpack\\Textures");
+            Directory.Delete(gameDirectory + "\\TextSoundRando\\Temp\\Sounds", true);
+            Directory.Delete(gameDirectory + "\\TextSoundRando\\Temp\\Textures", true);
+            Directory.CreateDirectory(gameDirectory + "\\TextSoundRando\\Temp\\Sounds");
+            Directory.CreateDirectory(gameDirectory + "\\TextSoundRando\\Temp\\Textures");
         }
 
         private void CreateBackups()
@@ -401,7 +401,7 @@ namespace DS_Texture_Sound_Randomizer
             }
 
             var t = new MPUP();
-            t.Repack(directoriesToRepack, threadCount, gameDirectory, gameDirectory + @"\TextSoundRando\Temp\Textures");
+            t.Repack(directoriesToRepack, 1, gameDirectory, gameDirectory + @"\TextSoundRando\Temp\Textures");
         }
 
         private void UnpackSounds()
@@ -547,7 +547,7 @@ namespace DS_Texture_Sound_Randomizer
                 thread.Join();
 
             //copy the files into the sound directory
-            foreach (string fsbFile in Directory.EnumerateFiles("", "*.fsb", SearchOption.AllDirectories))
+            foreach (string fsbFile in Directory.EnumerateFiles(gameDirectory + "\\TextSoundRando\\Temp\\Sounds", "*.fsb", SearchOption.AllDirectories))
             {
                 File.Copy(fsbFile, gameDirectory + "\\sound\\" + Path.GetFileName(fsbFile), true);
             }
