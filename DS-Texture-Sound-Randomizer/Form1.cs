@@ -114,6 +114,10 @@ namespace DS_Texture_Sound_Randomizer
                     btnCreateBackups.Enabled = false;
                     LogMessage("Backups found.");
                 }
+                else
+                {
+                    btnRestoreBackups.Enabled = false;
+                }
 
                 if (File.Exists(gameDirectory + @"\TextSoundRando\Unpack\Sounds\frpg_xm18.fsb\y1800.wav.mp3"))
                 {
@@ -218,7 +222,7 @@ namespace DS_Texture_Sound_Randomizer
             LogMessage("Backups created.");
             isBackupsExist = true;
             btnCreateBackups.Enabled = false;
-
+            btnRestoreBackups.Enabled = true;
         }
 
         private void btnRestoreBackups_Click(object sender, EventArgs e)
@@ -265,7 +269,7 @@ namespace DS_Texture_Sound_Randomizer
                 return;
             }
 
-            ClearTempFolder();
+            //ClearTempFolder();
 
             if (randomizeTextures)
             {
@@ -281,7 +285,12 @@ namespace DS_Texture_Sound_Randomizer
                 FixMainSoundFile();
             }
 
-            ClearTempFolder();
+            if(chkFixMainSoundFile.Checked)
+            {
+                FixMainSoundFile();
+            }
+
+            //ClearTempFolder();
 
             LogMessage("Randomizing complete!");
         }
@@ -769,11 +778,15 @@ namespace DS_Texture_Sound_Randomizer
 
             bool isValid = false;
             string mainSoundFileFolder = gameDirectory + "\\TextSoundRando\\Temp\\Sounds\\frpg_main.fsb";
-            long mainFileSize = new FileInfo(mainSoundFileFolder + "\\frpg_main.fsb").Length;
+            
 
-            if (File.Exists(mainSoundFileFolder + "\\frpg_main.fsb") && mainFileSize > minMainSoundFileSize && mainFileSize < maxMainSoundFileSize)
+            if (File.Exists(mainSoundFileFolder + "\\frpg_main.fsb"))
             {
-                isValid = true;
+                long mainFileSize = new FileInfo(mainSoundFileFolder + "\\frpg_main.fsb").Length;
+                if(mainFileSize > minMainSoundFileSize && mainFileSize < maxMainSoundFileSize)
+                {
+                    isValid = true;
+                }                
             }
 
             while (!isValid)
@@ -790,9 +803,10 @@ namespace DS_Texture_Sound_Randomizer
 
                 GetSoundsToSwap(out smallSoundFiles, out mediumSoundFiles, out largeSoundFiles);
 
-                Random r = new Random(seed);
+                //cant use seed for fixing main file or itll just give the same files over
+                Random r = new Random();
 
-                foreach (string file in Directory.GetFiles(mainSoundFileFolder))
+                foreach (string file in Directory.GetFiles(gameDirectory + "\\TextSoundRando\\Unpack\\Sounds\\frpg_main.fsb"))
                 {
                     if (CheckIsValidSoundForSwapping(file))
                     {
@@ -841,7 +855,7 @@ namespace DS_Texture_Sound_Randomizer
                 main.Enqueue("frpg_main.fsb");
                 RepackFSBs(main);
 
-                mainFileSize = new FileInfo(mainSoundFileFolder + "\\frpg_main.fsb").Length;
+                long mainFileSize = new FileInfo(mainSoundFileFolder + "\\frpg_main.fsb").Length;
 
                 if (File.Exists(mainSoundFileFolder + "\\frpg_main.fsb") && mainFileSize > minMainSoundFileSize && mainFileSize < maxMainSoundFileSize)
                 {
