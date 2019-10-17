@@ -18,16 +18,19 @@ namespace DS_Texture_Sound_Randomizer
 {
     public partial class Form1 : Form
     {
-        public string gameDirectory = "";
+        string gameDirectory = "";
         string[] gameFileDirectories = { "chr", "font", "map", "menu", "other", "parts", "sfx", "sound" };
-        string[] validImageExtensions = { ".png", ".dds", ".jpg", ".tga" };
+        string[] validImageExtensions = { ".png", ".jpg", ".jpeg", ".tga" };
         string[] validSoundExtensions = { ".mp3", ".wav" };
         string[] uiTextureFiles = { "DSFont24_0000.dds", "DSFont24_0001.dds", "TalkFont24_0000.dds", "TalkFont24_0001.dds" };
+        int soundSmallFileThreshold = 70000;
+        int soundMediumFileThreshold = 700000;
+        int minMainSoundFileSize = 5500000;
+        int maxMainSoundFileSize = 8400000;
         int seed = 0;
         int threadCount;
         bool isBackupsExist = false;
         bool isGameUnpacked = false;
-
         bool randomizeTextures, onlyCustomTextures, randomizeUiTextures, randomizeSounds, onlyCustomSounds;
 
         public Form1()
@@ -48,7 +51,12 @@ namespace DS_Texture_Sound_Randomizer
                 {
                     //user hasn't unpacked their game
                     LogError("You don't seem to have an unpacked Dark Souls installation. Please run UDSFM and come back :)");
+                    EnableButtons(false);
                 }
+            }
+            else
+            {
+                EnableButtons(false);
             }
 
             if (File.Exists(gameDirectory + @"\TextSoundRando\Backup\sfx\FRPG_SfxBnd_m18_01.ffxbnd"))
@@ -87,11 +95,17 @@ namespace DS_Texture_Sound_Randomizer
                 if (!File.Exists(gameDirectory + "\\DARKSOULS.exe"))
                 {
                     LogError("Not a valid Data directory!");
+                    EnableButtons(false);
                 }
                 else if (!File.Exists(gameDirectory + "\\param\\GameParam\\GameParam.parambnd"))
                 {
                     //user hasn't unpacked their game
                     LogError("You don't seem to have an unpacked Dark Souls installation. Please run UDSFM and come back :)");
+                    EnableButtons(false);
+                }
+                else
+                {
+                    EnableButtons(true);
                 }
 
                 if (File.Exists(gameDirectory + @"\TextSoundRando\Backup\sfx\FRPG_SfxBnd_m18_01.ffxbnd"))
@@ -211,9 +225,9 @@ namespace DS_Texture_Sound_Randomizer
         {
             LogMessage("Restoring backups.");
 
-            //Thread t = new Thread(CreateBackups);
-            //t.Start();
-            //t.Join();
+            Thread t = new Thread(RestoreBackups);
+            t.Start();
+            t.Join();
 
             LogMessage("Backups restored.");
         }
@@ -244,31 +258,18 @@ namespace DS_Texture_Sound_Randomizer
 
         private void btnSubmit_Click(object sender, EventArgs e)
         {
-            threadCount = (int)numThreads.Value;
-
-            ClearTempFolder();
-
-            //TODO doin stuff on threads, writing to label, disable button on submit etc
+            threadCount = (int)numThreads.Value;            
 
             if (!ValidateInput())
             {
                 return;
             }
 
-            if (!isBackupsExist)
-            {
-                LogError("Create a backup first.");
-                return;
-            }
+            ClearTempFolder();
 
-            if(!isGameUnpacked)
+            if (randomizeTextures)
             {
-                LogError("Unpack your game files first.");
-                return;
-            }
-
-            if(randomizeTextures)
-            {
+                ConvertTextures();
                 RandomizeTextures();
                 RepackTextures();
             }
@@ -277,12 +278,12 @@ namespace DS_Texture_Sound_Randomizer
             { 
                 RandomizeSounds();
                 RepackSounds();
+                FixMainSoundFile();
             }
 
-            //TODO fix main sound file
-
-
             ClearTempFolder();
+
+            LogMessage("Randomizing complete!");
         }
 
         private bool ValidateInput()
@@ -299,6 +300,18 @@ namespace DS_Texture_Sound_Randomizer
             {
                 //user hasn't unpacked their game
                 LogError("You don't seem to have an unpacked Dark Souls installation. Please run UDSFM and come back :)");
+                return false;
+            }
+
+            if (!isBackupsExist)
+            {
+                LogError("Create a backup first.");
+                return false;
+            }
+
+            if (!isGameUnpacked)
+            {
+                LogError("Unpack your game files first.");
                 return false;
             }
 
@@ -321,11 +334,18 @@ namespace DS_Texture_Sound_Randomizer
             randomizeSounds = chkRandomizeSounds.Checked;
             onlyCustomSounds = chkOnlyCustomSounds.Checked;
 
+            if(!randomizeTextures && !randomizeSounds && !chkFixMainSoundFile.Checked)
+            {
+                LogError("Select an operation.");
+                return false;
+            }
+
             return true;
         }
 
         private void ClearTempFolder()
         {
+            LogMessage("Clearing temp folders");
             //empty temp directories and re-create empty
             if(Directory.Exists(gameDirectory + "\\TextSoundRando\\Temp\\Textures"))
             {
@@ -373,9 +393,10 @@ namespace DS_Texture_Sound_Randomizer
 
             foreach (var item in Directory.EnumerateFiles(backupDirectory, "*", SearchOption.AllDirectories))
             {
-                File.Copy(item, item.Replace(@"\TextSoundRando\backup\", ""), true);
+                File.Copy(item, item.Replace(@"\TextSoundRando\backup\", "\\"), true);
             }
         }
+
 
         private void UnpackTextures()
         {
@@ -395,8 +416,31 @@ namespace DS_Texture_Sound_Randomizer
             t.Unpack(directoriesToUnpack, threadCount, gameDirectory, unpackDirectory);
         }
 
+        private void ConvertTextures()
+        {
+            LogMessage("Converting custom textures to .DDS format");
+            foreach (string item in Directory.GetFiles(gameDirectory + "\\TextSoundRando\\Custom Textures"))
+            {
+                if(validImageExtensions.Contains(Path.GetExtension(item).ToLower()))
+                {
+                    ProcessStartInfo startInfo = new ProcessStartInfo();
+                    startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    startInfo.FileName = "cmd.exe";
+                    startInfo.WorkingDirectory = gameDirectory + @"\TextSoundRando\binaries\texconv";
+                    startInfo.Arguments = $"/C texconv -o \"{gameDirectory + "\\TextSoundRando\\Custom Textures"}\" -y -singleproc -pow2 \"{item}\"";
+
+                    using (Process process = Process.Start(startInfo))
+                    {
+                        process.WaitForExit();
+                    }
+                }                
+            }
+        }
+
         private void RandomizeTextures()
         {
+            LogMessage("Randomizing textures.");
+
             using (StreamWriter sw = new StreamWriter(gameDirectory + @"\TextSoundRando\texMaps.csv"))
             {
                 string inputFolder = gameDirectory + @"\TextSoundRando\Unpack\Textures";
@@ -417,8 +461,6 @@ namespace DS_Texture_Sound_Randomizer
 
                             sw.WriteLine(file + "," + pathsToSwap[rando]);
 
-                            //TODO convert to DDS file
-                            //texconv BC1_UNORM -y -singleproc -pow2 cat.jpg
                             if (!onlyCustomTextures)
                             {
                                 pathsToSwap.RemoveAt(rando);
@@ -437,7 +479,7 @@ namespace DS_Texture_Sound_Randomizer
 
         private bool CheckIsValidTextureForSwapping(string fileName)
         {
-            if(!File.Exists(fileName) || !validImageExtensions.Contains(Path.GetExtension(fileName)))
+            if(!File.Exists(fileName) || Path.GetExtension(fileName).ToLower() != ".dds")
             {
                 return false;
             }
@@ -482,6 +524,8 @@ namespace DS_Texture_Sound_Randomizer
 
         private void RepackTextures()
         {
+            LogMessage("Repacking textures.");
+
             string[] directoriesToRepack = new string[gameFileDirectories.Length];
             for (int i = 0; i < gameFileDirectories.Length; i++)
             {
@@ -544,10 +588,17 @@ namespace DS_Texture_Sound_Randomizer
 
         private void RandomizeSounds()
         {
+            LogMessage("Randomizing sounds.");
+
             using (StreamWriter sw = new StreamWriter(gameDirectory + @"\TextSoundRando\soundMaps.csv"))
             {
                 string inputFolder = gameDirectory + @"\TextSoundRando\Unpack\Sounds";
-                List<string> pathsToSwap = GetSoundsToSwap();
+
+
+                List<string> smallSoundFiles, mediumSoundFiles, largeSoundFiles;
+
+                GetSoundsToSwap(out smallSoundFiles, out mediumSoundFiles, out largeSoundFiles);
+
                 Random r = new Random(seed);
 
                 foreach (string directory in Directory.EnumerateDirectories(inputFolder, "*", SearchOption.AllDirectories))
@@ -559,15 +610,45 @@ namespace DS_Texture_Sound_Randomizer
                     {
                         if (CheckIsValidSoundForSwapping(file))
                         {
-                            int rando = r.Next(pathsToSwap.Count);
-                            File.Copy(pathsToSwap[rando], tempDirectory + "\\" + Path.GetFileName(file), true);
+                            long fileSize = new FileInfo(file).Length;
 
-                            sw.WriteLine(file, pathsToSwap[rando]);
-
-                            if (!onlyCustomSounds)
+                            //sound files must be replaced by a similar-ish sized or else the game might not load
+                            if (fileSize < soundSmallFileThreshold)
                             {
-                                pathsToSwap.RemoveAt(rando);
+                                int rando = r.Next(smallSoundFiles.Count);
+                                File.Copy(smallSoundFiles[rando], tempDirectory + "\\" + Path.GetFileName(file), true);
+
+                                sw.WriteLine(file, smallSoundFiles[rando]);
+
+                                if (!onlyCustomSounds)
+                                {
+                                    smallSoundFiles.RemoveAt(rando);
+                                }
                             }
+                            else if (fileSize < soundMediumFileThreshold)
+                            {
+                                int rando = r.Next(mediumSoundFiles.Count);
+                                File.Copy(mediumSoundFiles[rando], tempDirectory + "\\" + Path.GetFileName(file), true);
+
+                                sw.WriteLine(file, mediumSoundFiles[rando]);
+
+                                if (!onlyCustomSounds)
+                                {
+                                    mediumSoundFiles.RemoveAt(rando);
+                                }
+                            }
+                            else
+                            {
+                                int rando = r.Next(largeSoundFiles.Count);
+                                File.Copy(largeSoundFiles[rando], tempDirectory + "\\" + Path.GetFileName(file), true);
+
+                                sw.WriteLine(file, largeSoundFiles[rando]);
+
+                                if (!onlyCustomSounds)
+                                {
+                                    largeSoundFiles.RemoveAt(rando);
+                                }
+                            }                            
                         }
                         else
                         {
@@ -579,20 +660,40 @@ namespace DS_Texture_Sound_Randomizer
             }
         }
 
-        private List<string> GetSoundsToSwap()
+        private void GetSoundsToSwap(out List<string> smallSoundFiles, out List<string> mediumSoundFiles, out List<string> largeSoundFiles)
         {
+            smallSoundFiles = new List<string>();
+            mediumSoundFiles = new List<string>();
+            largeSoundFiles = new List<string>();
+
             string[] soundDirs = { "\\TextSoundRando\\Custom Sounds", "\\TextSoundRando\\Unpack\\Sounds" };
-            List<string> sounds = new List<string>();
 
             for (int i = 0; i < soundDirs.Length; i++)
             {
                 foreach (string directory in Directory.EnumerateDirectories(gameDirectory + soundDirs[i], "*", SearchOption.AllDirectories))
                 {
-                    sounds.AddRange(Directory.GetFiles(directory).Where(s => CheckIsValidSoundForSwapping(s)));
+                    foreach (var file in Directory.GetFiles(directory))
+                    {
+                        if(CheckIsValidSoundForSwapping(file))
+                        {
+                            long fileSize = new FileInfo(file).Length;
+
+                            if (fileSize < soundSmallFileThreshold)
+                            {
+                                smallSoundFiles.Add(file);
+                            }
+                            else if (fileSize < soundMediumFileThreshold)
+                            {
+                                mediumSoundFiles.Add(file);
+                            }
+                            else
+                            {
+                                largeSoundFiles.Add(file);
+                            }
+                        }
+                    }
                 }
             }
-
-            return sounds;
         }
 
         private bool CheckIsValidSoundForSwapping(string fileName)
@@ -613,6 +714,8 @@ namespace DS_Texture_Sound_Randomizer
 
         private void RepackSounds()
         {
+            LogMessage("Repacking sounds.");
+
             ConcurrentQueue<string> filepaths = new ConcurrentQueue<string>();
             Thread[] threads = new Thread[threadCount];
 
@@ -660,6 +763,97 @@ namespace DS_Texture_Sound_Randomizer
             }
         }
 
+        private void FixMainSoundFile()
+        {
+            LogMessage("Checking main sound file");
+
+            bool isValid = false;
+            string mainSoundFileFolder = gameDirectory + "\\TextSoundRando\\Temp\\Sounds\\frpg_main.fsb";
+            long mainFileSize = new FileInfo(mainSoundFileFolder + "\\frpg_main.fsb").Length;
+
+            if (File.Exists(mainSoundFileFolder + "\\frpg_main.fsb") && mainFileSize > minMainSoundFileSize && mainFileSize < maxMainSoundFileSize)
+            {
+                isValid = true;
+            }
+
+            while (!isValid)
+            {
+                LogMessage("Main sound file is invalid, retrying.");
+
+                //clear main sound temp folder
+                foreach (var file in Directory.GetFiles(mainSoundFileFolder))
+                {
+                    File.Delete(file);
+                }
+
+                List<string> smallSoundFiles, mediumSoundFiles, largeSoundFiles;
+
+                GetSoundsToSwap(out smallSoundFiles, out mediumSoundFiles, out largeSoundFiles);
+
+                Random r = new Random(seed);
+
+                foreach (string file in Directory.GetFiles(mainSoundFileFolder))
+                {
+                    if (CheckIsValidSoundForSwapping(file))
+                    {
+                        long fileSize = new FileInfo(file).Length;
+
+                        //sound files must be replaced by a similar-ish sized or else the game might not load
+                        if (fileSize < soundSmallFileThreshold)
+                        {
+                            int rando = r.Next(smallSoundFiles.Count);
+                            File.Copy(smallSoundFiles[rando], mainSoundFileFolder + "\\" + Path.GetFileName(file), true);
+
+                            if (!onlyCustomSounds)
+                            {
+                                smallSoundFiles.RemoveAt(rando);
+                            }
+                        }
+                        else if (fileSize < soundMediumFileThreshold)
+                        {
+                            int rando = r.Next(mediumSoundFiles.Count);
+                            File.Copy(mediumSoundFiles[rando], mainSoundFileFolder + "\\" + Path.GetFileName(file), true);
+
+                            if (!onlyCustomSounds)
+                            {
+                                mediumSoundFiles.RemoveAt(rando);
+                            }
+                        }
+                        else
+                        {
+                            int rando = r.Next(largeSoundFiles.Count);
+                            File.Copy(largeSoundFiles[rando], mainSoundFileFolder + "\\" + Path.GetFileName(file), true);
+
+                            if (!onlyCustomSounds)
+                            {
+                                largeSoundFiles.RemoveAt(rando);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        //not a sound file - copy it to directory as is
+                        File.Copy(file, mainSoundFileFolder + "\\" + Path.GetFileName(file), true);
+                    }
+                }
+
+                ConcurrentQueue<string> main = new ConcurrentQueue<string>();
+                main.Enqueue("frpg_main.fsb");
+                RepackFSBs(main);
+
+                mainFileSize = new FileInfo(mainSoundFileFolder + "\\frpg_main.fsb").Length;
+
+                if (File.Exists(mainSoundFileFolder + "\\frpg_main.fsb") && mainFileSize > minMainSoundFileSize && mainFileSize < maxMainSoundFileSize)
+                {
+                    isValid = true;
+                }
+            }
+
+            File.Copy(mainSoundFileFolder + "\\frpg_main.fsb", gameDirectory + "\\sound\\frpg_main.fsb");
+
+            LogMessage("Main sound file is valid!");
+        }
+
         private void LogMessage(string message)
         {
             if (rtfLog.Text.Length > 0)
@@ -676,6 +870,16 @@ namespace DS_Texture_Sound_Randomizer
             rtfLog.Select(rtfLog.TextLength, 0);
             rtfLog.SelectionColor = Color.Red;
             rtfLog.AppendText(message);
+        }
+
+        private void EnableButtons(bool enabled)
+        {
+            btnCreateBackups.Enabled = enabled;
+            btnRestoreBackups.Enabled = enabled;
+            btnExtractFiles.Enabled = enabled;
+            btnOpenCustomTextureFolder.Enabled = enabled;
+            btnOpenCustomSoundFolder.Enabled = enabled;
+            btnSubmit.Enabled = enabled;
         }
     }
 }

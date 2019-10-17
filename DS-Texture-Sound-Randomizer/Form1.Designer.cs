@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.btnSubmit = new System.Windows.Forms.Button();
             this.btnGamePathSelect = new System.Windows.Forms.Button();
             this.txtGamePath = new System.Windows.Forms.TextBox();
@@ -270,7 +271,7 @@
             this.rtfLog.Name = "rtfLog";
             this.rtfLog.ReadOnly = true;
             this.rtfLog.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.ForcedVertical;
-            this.rtfLog.Size = new System.Drawing.Size(464, 307);
+            this.rtfLog.Size = new System.Drawing.Size(464, 204);
             this.rtfLog.TabIndex = 61;
             this.rtfLog.Text = "";
             // 
@@ -278,7 +279,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(490, 606);
+            this.ClientSize = new System.Drawing.Size(490, 500);
             this.Controls.Add(this.rtfLog);
             this.Controls.Add(this.btnExtractFiles);
             this.Controls.Add(this.btnRestoreBackups);
@@ -294,8 +295,9 @@
             this.Controls.Add(this.lblGamePath);
             this.Controls.Add(this.lblSeed);
             this.Controls.Add(this.txtSeed);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "DS1 Texture and Sound Randomizer";
             this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.numThreads)).EndInit();
             this.groupBox1.ResumeLayout(false);
