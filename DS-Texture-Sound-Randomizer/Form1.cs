@@ -23,10 +23,12 @@ namespace DS_Texture_Sound_Randomizer
         string[] validImageExtensions = { ".png", ".jpg", ".jpeg", ".tga" };
         string[] validSoundExtensions = { ".mp3", ".wav" };
         string[] uiTextureFiles = { "DSFont24_0000.dds", "DSFont24_0001.dds", "TalkFont24_0000.dds", "TalkFont24_0001.dds" };
-        int soundSmallFileThreshold = 70000;
-        int soundMediumFileThreshold = 700000;
+
+        int soundSmallFileThreshold = 40000;
+        int soundMediumFileThreshold = 100000;
         int minMainSoundFileSize = 5500000;
         int maxMainSoundFileSize = 8400000;
+
         int seed = 0;
         int threadCount;
         bool isBackupsExist = false;
@@ -269,7 +271,7 @@ namespace DS_Texture_Sound_Randomizer
                 return;
             }
 
-            //ClearTempFolder();
+            ClearTempFolder();
 
             if (randomizeTextures)
             {
@@ -290,7 +292,7 @@ namespace DS_Texture_Sound_Randomizer
                 FixMainSoundFile();
             }
 
-            //ClearTempFolder();
+            ClearTempFolder();
 
             LogMessage("Randomizing complete!");
         }
@@ -354,7 +356,7 @@ namespace DS_Texture_Sound_Randomizer
 
         private void ClearTempFolder()
         {
-            LogMessage("Clearing temp folders");
+            LogMessage("Clearing temp folders.");
             //empty temp directories and re-create empty
             if(Directory.Exists(gameDirectory + "\\TextSoundRando\\Temp\\Textures"))
             {
@@ -779,19 +781,20 @@ namespace DS_Texture_Sound_Randomizer
             bool isValid = false;
             string mainSoundFileFolder = gameDirectory + "\\TextSoundRando\\Temp\\Sounds\\frpg_main.fsb";
             
-
             if (File.Exists(mainSoundFileFolder + "\\frpg_main.fsb"))
             {
                 long mainFileSize = new FileInfo(mainSoundFileFolder + "\\frpg_main.fsb").Length;
                 if(mainFileSize > minMainSoundFileSize && mainFileSize < maxMainSoundFileSize)
                 {
                     isValid = true;
-                }                
+                }
             }
 
             while (!isValid)
             {
                 LogMessage("Main sound file is invalid, retrying.");
+
+                Directory.CreateDirectory(mainSoundFileFolder);
 
                 //clear main sound temp folder
                 foreach (var file in Directory.GetFiles(mainSoundFileFolder))
@@ -863,7 +866,7 @@ namespace DS_Texture_Sound_Randomizer
                 }
             }
 
-            File.Copy(mainSoundFileFolder + "\\frpg_main.fsb", gameDirectory + "\\sound\\frpg_main.fsb");
+            File.Copy(mainSoundFileFolder + "\\frpg_main.fsb", gameDirectory + "\\sound\\frpg_main.fsb", true);
 
             LogMessage("Main sound file is valid!");
         }
