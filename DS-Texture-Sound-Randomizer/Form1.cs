@@ -19,6 +19,7 @@ namespace DS_Texture_Sound_Randomizer
     public partial class Form1 : Form
     {
         string gameDirectory = "";
+        string[] fileTypesToBackup = { ".chrbnd", ".ffxbnd", ".fgbnd", ".objbnd", ".partsbnd", ".tpf", ".tpfbhd", ".fsb" };
         string[] gameFileDirectories = { "chr", "font", "map", "menu", "other", "parts", "sfx", "sound" };
         string[] validImageExtensions = { ".png", ".jpg", ".jpeg", ".tga" };
         string[] validSoundExtensions = { ".mp3", ".wav" };
@@ -264,7 +265,11 @@ namespace DS_Texture_Sound_Randomizer
 
         private void btnSubmit_Click(object sender, EventArgs e)
         {
-            threadCount = (int)numThreads.Value;            
+            threadCount = (int)numThreads.Value;
+
+            ConcurrentQueue<string> test = new ConcurrentQueue<string>();
+            test.Enqueue("");
+            RepackFSBs2(test);
 
             if (!ValidateInput())
             {
@@ -392,7 +397,12 @@ namespace DS_Texture_Sound_Randomizer
 
                     foreach (string file_name in Directory.GetFiles(sourceDirectory, "*", SearchOption.AllDirectories))
                     {
-                        File.Copy(file_name, Path.Combine(destinationDirectory, file_name.Substring(sourceDirectory.Length + 1)));
+                        if(fileTypesToBackup.Contains(Path.GetFileName(file_name)))
+                        {
+                            //TODO dont create directories with files types we dont need
+
+                            File.Copy(file_name, Path.Combine(destinationDirectory, file_name.Substring(sourceDirectory.Length + 1)));
+                        }
                     }
                 }
             }
@@ -581,13 +591,15 @@ namespace DS_Texture_Sound_Randomizer
             {
                 string unpackDirectory = gameDirectory + @"\TextSoundRando\Unpack\Sounds\" + Path.GetFileName(filepath);
 
-                Directory.CreateDirectory(unpackDirectory);         
+                Directory.CreateDirectory(unpackDirectory);
+
+                File.Copy(filepath, unpackDirectory + "\\" + Path.GetFileName(filepath));
 
                 ProcessStartInfo startInfo = new ProcessStartInfo();
                 startInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 startInfo.FileName = "cmd.exe";
                 startInfo.WorkingDirectory = gameDirectory + @"\TextSoundRando\Binaries\fsbext";
-                startInfo.Arguments = $"/C fsbext -m -d \"{unpackDirectory}\" -s \"{unpackDirectory + "\\files.dat"}\" \"{filepath}\"";
+                startInfo.Arguments = $"/C fsbext -d \"{unpackDirectory}\" \"{filepath}\"";
 
                 //run fsbext on each fsb file
                 using (Process process = Process.Start(startInfo))
@@ -764,13 +776,45 @@ namespace DS_Texture_Sound_Randomizer
                 startInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 startInfo.FileName = "cmd.exe";
                 startInfo.WorkingDirectory = gameDirectory + @"\TextSoundRando\Binaries\fsbext";
-                startInfo.Arguments = $"/C fsbext -m -d \"{unpackDirectory}\" -s \"{unpackDirectory + "\\files.dat"}\" -r \"{unpackDirectory + "\\" + filepath}\"";
+                startInfo.Arguments = $"/C fsbext -d \"{unpackDirectory}\" -r \"{unpackDirectory + "\\" + filepath}\"";
 
                 //run fsbext on each fsb file
                 using (Process process = Process.Start(startInfo))
                 {
                     process.WaitForExit();
                 }
+            }
+        }
+
+        private void RepackFSBs2(ConcurrentQueue<string> filepaths)
+        {
+            string filepath;
+            while (filepaths.TryDequeue(out filepath))
+            {
+                ProcessStartInfo startInfo = new ProcessStartInfo();
+                //startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                startInfo.FileName = "cmd.exe";
+                startInfo.WorkingDirectory = gameDirectory + @"\TextSoundRando\Binaries\DSSI";
+                startInfo.RedirectStandardInput = true;
+                startInfo.UseShellExecute = false;
+
+                using (Process process = Process.Start(startInfo))
+                {
+                    process.StartInfo = startInfo;
+                    process.Start();
+
+                    using (StreamWriter sw = process.StandardInput)
+                    {
+                        if (sw.BaseStream.CanWrite)
+                        {
+                            sw.WriteLine("for /F %%a in ('dir /b \"INPUT\\*.fsb\"') do set fsbid=%%a");
+                            sw.WriteLine("for /F \"tokens=*\" %%1 in ('dir /b \"INPUT\\*.mp3\"') do echo %%1>>INPUT\\fsblist.lst");
+                            sw.WriteLine("listrearranger %fsbid%");
+                            sw.WriteLine("fsbankcl -o OUTPUT\asd.fsb -f mp3 -q 50 INPUT\fsblist.lst");
+                            sw.WriteLine("inserter %fsbid%");
+                        }
+                    }
+                }                    
             }
         }
 

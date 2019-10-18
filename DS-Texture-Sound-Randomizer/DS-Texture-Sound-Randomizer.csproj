@@ -49,7 +49,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="SoulsFormats">
-      <HintPath>..\..\SoulsFormats\SoulsFormats-7bb42f447da8d7f0c4e73e2b7e4db13aa70a3224\SoulsFormats\bin\Release\SoulsFormats.dll</HintPath>
+      <HintPath>..\..\SoulsFormats\SoulsFormats\bin\Release\SoulsFormats.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
