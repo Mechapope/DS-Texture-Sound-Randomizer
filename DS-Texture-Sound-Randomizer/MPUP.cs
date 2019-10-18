@@ -30,13 +30,15 @@ namespace DS_Texture_Sound_Randomizer
 
         private string gameDir, looseDir;
         private Thread[] threads;
-
+        private int fileCount;
         private int convertInc = 0;
         private const string TEXCONV_PATH = @"bin\texconv.exe";
         private const string TEXCONV_SUFFIX = "_autoconvert";
+        public ConcurrentQueue<string> Log;
 
         public void Unpack(string[] directoriesToUnpack, int numThreads, string gameDir, string looseDir)
         {
+            Log = new ConcurrentQueue<string>();
             ConcurrentQueue<string> filepaths = new ConcurrentQueue<string>();
             this.gameDir = gameDir;
             this.looseDir = looseDir;
@@ -55,6 +57,8 @@ namespace DS_Texture_Sound_Randomizer
                     }
                 }
             }
+
+            fileCount = filepaths.Count;
 
             threads = new Thread[numThreads];
 
@@ -76,6 +80,8 @@ namespace DS_Texture_Sound_Randomizer
             string filepath;
             while (filepaths.TryDequeue(out filepath))
             {
+                Log.Enqueue("Unpacking texture file " + (fileCount - filepaths.Count) + " of " + fileCount);
+
                 // These are already full paths, but trust no one, not even yourself
                 string absolute = Path.GetFullPath(filepath);
                 string relative = absolute.Substring(gameDir.Length + 1);
@@ -160,6 +166,7 @@ namespace DS_Texture_Sound_Randomizer
 
         public void Repack(string[] directoriesToRepack, int numThreads, string gameDir, string looseDir)
         {
+            Log = new ConcurrentQueue<string>();
             ConcurrentQueue<string> filepaths = new ConcurrentQueue<string>();
             this.gameDir = gameDir;
             this.looseDir = looseDir;
@@ -180,6 +187,8 @@ namespace DS_Texture_Sound_Randomizer
                 }
             }
 
+            fileCount = filepaths.Count;
+
             threads = new Thread[numThreads];
 
             for (int i = 0; i < threads.Length; i++)
@@ -198,6 +207,7 @@ namespace DS_Texture_Sound_Randomizer
             string filepath;
             while (filepaths.TryDequeue(out filepath))
             {
+                Log.Enqueue("Repacking texture file " + (fileCount - filepaths.Count) + " of " + fileCount);
                 // These are already full paths, but trust no one, not even yourself
                 string absolute = Path.GetFullPath(filepath);
                 string relative = absolute.Substring(gameDir.Length + 1);
@@ -222,7 +232,8 @@ namespace DS_Texture_Sound_Randomizer
                         byte[] tpfBytes = tpf.Write();
                         if (dcx)
                             tpfBytes = DCX.Compress(tpfBytes, DCX.Type.DarkSouls1);
-                        File.WriteAllBytes(absolute, tpfBytes);
+                        Directory.CreateDirectory(Path.GetDirectoryName(gameDir + "\\TextSoundRando\\Output\\" + relative));
+                        File.WriteAllBytes(gameDir + "\\TextSoundRando\\Output\\" + relative, tpfBytes);
 
                         break;
 
@@ -248,7 +259,8 @@ namespace DS_Texture_Sound_Randomizer
                         {
                             bndBytes = DCX.Compress(bndBytes, DCX.Type.DarkSouls1);
                         }
-                        File.WriteAllBytes(absolute, bndBytes);
+                        Directory.CreateDirectory(Path.GetDirectoryName(gameDir + "\\TextSoundRando\\Output\\" + relative));
+                        File.WriteAllBytes(gameDir + "\\TextSoundRando\\Output\\" + relative, bndBytes);
 
                         break;
                 }

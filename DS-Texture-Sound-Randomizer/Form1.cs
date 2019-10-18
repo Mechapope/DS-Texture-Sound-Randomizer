@@ -36,6 +36,13 @@ namespace DS_Texture_Sound_Randomizer
         bool isGameUnpacked = false;
         bool randomizeTextures, onlyCustomTextures, randomizeUiTextures, randomizeSounds, onlyCustomSounds;
 
+        private MPUP mpup;
+        private SPUP spup;
+        private Thread mpupThread;
+        private Thread spupThread;
+
+        ConcurrentQueue<string> logQueue = new ConcurrentQueue<string>();
+
         public Form1()
         {
             InitializeComponent();
@@ -241,23 +248,10 @@ namespace DS_Texture_Sound_Randomizer
 
         private void btnExtractFiles_Click(object sender, EventArgs e)
         {
-            LogMessage("Extracting textures.");
-
             threadCount = (int)numThreads.Value;
 
-            Thread t2 = new Thread(UnpackTextures);
-            t2.Start();
-            t2.Join();
-
-            LogMessage("Textures extracted.");
-            LogMessage("Extracting sounds.");
-
-            Thread t = new Thread(UnpackSounds);
-            t.Start();
-            t.Join();
-
-            LogMessage("Sounds extracted.");
-            LogMessage("Extracting game files complete.");
+            UnpackTextures();
+            UnpackSounds();
 
             isGameUnpacked = true;
             btnExtractFiles.Enabled = false;
@@ -272,7 +266,7 @@ namespace DS_Texture_Sound_Randomizer
                 return;
             }
 
-            //ClearTempFolder();
+            ClearTempFolder();
 
             if (randomizeTextures)
             {
@@ -282,10 +276,10 @@ namespace DS_Texture_Sound_Randomizer
             }
 
             if(randomizeSounds)
-            { 
-                //RandomizeSounds();
+            {
+                RandomizeSounds();
                 RepackSounds();
-                //FixMainSoundFile();
+                FixMainSoundFile();
             }
 
             if(chkFixMainSoundFile.Checked)
@@ -293,7 +287,7 @@ namespace DS_Texture_Sound_Randomizer
                 FixMainSoundFile();
             }
 
-            //ClearTempFolder();
+            ClearTempFolder();
 
             LogMessage("Randomizing complete!");
         }
@@ -324,7 +318,7 @@ namespace DS_Texture_Sound_Randomizer
             if (!isGameUnpacked)
             {
                 LogError("Unpack your game files first.");
-                //return false;
+                return false;
             }
 
             //generate a seed if needed
@@ -379,25 +373,14 @@ namespace DS_Texture_Sound_Randomizer
 
             for (int i = 0; i < gameFileDirectories.Length; i++)
             {
-                string sourceDirectory = gameDirectory + "\\" + gameFileDirectories[i];
-                string destinationDirectory = backupDirectory + gameFileDirectories[i];
-
-                if (!Directory.Exists(gameDirectory + gameFileDirectories[i]))
+                if(!Directory.Exists(backupDirectory + "\\" + gameFileDirectories[i]))
                 {
-                    Directory.CreateDirectory(backupDirectory + gameFileDirectories[i]);
-
-                    foreach (string dir in Directory.GetDirectories(sourceDirectory, "*", SearchOption.AllDirectories))
+                    foreach (string file_name in Directory.GetFiles(gameDirectory + "\\" + gameFileDirectories[i], "*", SearchOption.AllDirectories))
                     {
-                        Directory.CreateDirectory(Path.Combine(destinationDirectory, dir.Substring(sourceDirectory.Length + 1)));
-                    }
-
-                    foreach (string file_name in Directory.GetFiles(sourceDirectory, "*", SearchOption.AllDirectories))
-                    {
-                        if(fileTypesToBackup.Contains(Path.GetFileName(file_name)))
+                        if(fileTypesToBackup.Contains(Path.GetExtension(file_name)))
                         {
-                            //TODO dont create directories with files types we dont need
-
-                            File.Copy(file_name, Path.Combine(destinationDirectory, file_name.Substring(sourceDirectory.Length + 1)));
+                            Directory.CreateDirectory(backupDirectory + Path.GetDirectoryName(file_name).Substring(gameDirectory.Length));
+                            File.Copy(file_name, backupDirectory + file_name.Substring(gameDirectory.Length));
                         }
                     }
                 }
@@ -429,13 +412,16 @@ namespace DS_Texture_Sound_Randomizer
                 directoriesToUnpack[i] = gameDirectory + "\\" + gameFileDirectories[i];
             }
 
-            var t = new MPUP();
-            t.Unpack(directoriesToUnpack, threadCount, gameDirectory, unpackDirectory);
+            mpup = new MPUP();
+            mpupThread = new Thread(() => mpup.Unpack(directoriesToUnpack, threadCount, gameDirectory, unpackDirectory));
+            mpupThread.Start();
+            mpupThread.Join();
         }
 
         private void ConvertTextures()
         {
             LogMessage("Converting custom textures to .DDS format");
+
             foreach (string item in Directory.GetFiles(gameDirectory + "\\TextSoundRando\\Custom Textures"))
             {
                 if(validImageExtensions.Contains(Path.GetExtension(item).ToLower()))
@@ -549,35 +535,18 @@ namespace DS_Texture_Sound_Randomizer
                 directoriesToRepack[i] = gameDirectory + "\\" + gameFileDirectories[i];
             }
 
-            var t = new MPUP();
-            t.Repack(directoriesToRepack, 1, gameDirectory, gameDirectory + @"\TextSoundRando\Temp\Textures");
+            mpup = new MPUP();
+            mpupThread = new Thread(() => mpup.Repack(directoriesToRepack, threadCount, gameDirectory, gameDirectory + @"\TextSoundRando\Temp\Textures"));
+            mpupThread.Start();
+            mpupThread.Join();
         }
 
         private void UnpackSounds()
         {
-            string unpackDirectory = gameDirectory + "\\TextSoundRando\\Unpack\\Sounds";
-            if (!Directory.Exists(unpackDirectory))
-            {
-                Directory.CreateDirectory(unpackDirectory);
-            }
-
-            ConcurrentQueue<string> filepaths = new ConcurrentQueue<string>();
-            Thread[] threads = new Thread[threadCount];
-
-            foreach (string filepath in Directory.EnumerateFiles(gameDirectory + "\\sound", "*.fsb"))
-            {
-                filepaths.Enqueue(filepath);
-            }
-
-            for (int i = 0; i < threads.Length; i++)
-            {
-                Thread thread = new Thread(() => UnpackFSBs(filepaths));
-                threads[i] = thread;
-                thread.Start();
-            }
-
-            foreach (Thread thread in threads)
-                thread.Join();
+            spup = new SPUP();
+            spupThread = new Thread(() => spup.Unpack(gameDirectory + "\\TextSoundRando\\Unpack\\Sounds", threadCount, gameDirectory));
+            spupThread.Start();
+            spupThread.Join();
         }
 
         private void UnpackFSBs(ConcurrentQueue<string> filepaths)
@@ -604,6 +573,8 @@ namespace DS_Texture_Sound_Randomizer
                 }
             }
         }
+
+
 
         private void RandomizeSounds()
         {
@@ -733,44 +704,10 @@ namespace DS_Texture_Sound_Randomizer
 
         private void RepackSounds()
         {
-            LogMessage("Repacking sounds.");
-
-            ConcurrentQueue<string> filepaths = new ConcurrentQueue<string>();
-            Thread[] threads = new Thread[threadCount];
-
-            foreach (string filepath in Directory.EnumerateDirectories(gameDirectory + "\\TextSoundRando\\Temp\\Sounds"))
-            {
-                filepaths.Enqueue(filepath);
-            }
-
-            string masterDssi = gameDirectory + "\\TextSoundRando\\Binaries\\DSSI";
-
-            for (int i = 0; i < threads.Length; i++)
-            {
-                //the dumbest thing ive ever coded - make copies of dssi in different folders so this runs faster
-                foreach (var item in Directory.EnumerateFiles(masterDssi, "*", SearchOption.AllDirectories))
-                {
-                    if(!Directory.Exists(masterDssi + i))
-                    {
-                        Directory.CreateDirectory(Path.Combine(masterDssi + i + "\\Input"));
-                        Directory.CreateDirectory(Path.Combine(masterDssi + i + "\\Output"));
-                        File.Copy(item, Path.Combine(masterDssi + i + "\\" + item.Substring(masterDssi.Length + 1)));
-                    }                    
-                }
-
-                Thread thread = new Thread(() => RepackFSBs2(masterDssi + i, filepaths));
-                threads[i] = thread;
-                thread.Start();
-            }
-
-            foreach (Thread thread in threads)
-                thread.Join();
-
-            //copy the files into the sound directory
-            foreach (string fsbFile in Directory.EnumerateFiles(gameDirectory + "\\TextSoundRando\\Temp\\Sounds", "*.fsb", SearchOption.AllDirectories))
-            {
-                File.Copy(fsbFile, gameDirectory + "\\sound\\" + Path.GetFileName(fsbFile), true);
-            }
+            spup = new SPUP();
+            spupThread = new Thread(() => spup.Repack(gameDirectory + "\\TextSoundRando\\Temp\\Sounds", threadCount, gameDirectory));
+            spupThread.Start();
+            spupThread.Join();
         }
 
         private void RepackFSBs(ConcurrentQueue<string> filepaths)
@@ -795,15 +732,20 @@ namespace DS_Texture_Sound_Randomizer
             }
         }
 
-        private void RepackFSBs2(string dssiPath, ConcurrentQueue<string> filepaths)
+        private void RepackFSBs2(string dssiPath, ConcurrentQueue<string> filepaths, int totalAmount)
         {
             string filepath;
             while (filepaths.TryDequeue(out filepath))
             {
+                logQueue.Enqueue("Repacking sound file" + (totalAmount - filepaths.Count) + " of " + totalAmount);
+
                 foreach (var file in Directory.GetFiles(filepath))
                 {
                     File.Copy(file, dssiPath + "\\input\\" + Path.GetFileName(file));
                 }
+
+                //wait a short time or else youll get file access error sometimes
+                Thread.Sleep(5000);
 
                 ProcessStartInfo startInfo = new ProcessStartInfo(dssiPath + "\\DSSI.bat");
                 startInfo.WindowStyle = ProcessWindowStyle.Hidden;
@@ -817,16 +759,64 @@ namespace DS_Texture_Sound_Randomizer
                 //wait a short time or else youll get file access error sometimes
                 Thread.Sleep(5000);
 
-                foreach (var file in Directory.GetFiles(filepath))
+                //clear input folder
+                foreach (var file in Directory.GetFiles(dssiPath + "\\input"))
                 {
-                    if (File.Exists(dssiPath + "\\input\\" + Path.GetFileName(file)))
-                    {
-                        File.Delete(dssiPath + "\\input\\" + Path.GetFileName(file));
-                    }
+                    File.Delete(file);
                 }
 
-                File.Copy(dssiPath + "\\output\\" + Path.GetFileName(filepath), gameDirectory + "\\TextSoundRando\\Output\\sound\\" + Path.GetFileName(filepath), true);
+                File.Copy(dssiPath + "\\output\\" + Path.GetFileName(filepath), gameDirectory + "\\TextSoundRando\\Output\\Sound\\" + Path.GetFileName(filepath), true);
+                File.Delete(dssiPath + "\\output\\" + Path.GetFileName(filepath));
             }
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            if (mpupThread != null)
+            {
+                if (mpupThread.IsAlive)
+                {
+                    updateLogs();
+                }
+                else
+                {
+                    updateLogs();
+                    mpup = null;
+                    mpupThread = null;
+                }
+            }
+
+            if (spupThread != null)
+            {
+                if (spupThread.IsAlive)
+                {
+                    updateLogs();
+                }
+                else
+                {
+                    updateLogs();
+                    spup = null;
+                    spupThread = null;
+                }
+            }
+
+        }
+
+        private void updateLogs()
+        {
+            string line = "";
+
+            if(mpup != null)
+            {
+                while (mpup.Log.TryDequeue(out line))
+                    LogMessage(line);
+            }
+            
+            if(spup != null)
+            {
+                while (spup.Log.TryDequeue(out line))
+                    LogMessage(line);
+            }           
         }
 
         private void FixMainSoundFile()
@@ -909,11 +899,12 @@ namespace DS_Texture_Sound_Randomizer
                     }
                 }
 
-                ConcurrentQueue<string> main = new ConcurrentQueue<string>();
-                main.Enqueue("frpg_main.fsb");
-                RepackFSBs(main);
+                spup = new SPUP();
+                spupThread = new Thread(() => spup.Repack(gameDirectory + "\\TextSoundRando\\Temp\\Sounds\\frpg_main.fsb", 1, gameDirectory));
+                spupThread.Start();
+                spupThread.Join();
 
-                long mainFileSize = new FileInfo(mainSoundFileFolder + "\\frpg_main.fsb").Length;
+                long mainFileSize = new FileInfo(gameDirectory + "TextSoundRando\\Output\\sound\\frpg_main.fsb").Length;
 
                 if (File.Exists(mainSoundFileFolder + "\\frpg_main.fsb") && mainFileSize > minMainSoundFileSize && mainFileSize < maxMainSoundFileSize)
                 {

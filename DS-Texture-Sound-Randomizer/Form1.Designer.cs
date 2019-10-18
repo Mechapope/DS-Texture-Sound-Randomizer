@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.btnSubmit = new System.Windows.Forms.Button();
             this.btnGamePathSelect = new System.Windows.Forms.Button();
@@ -50,6 +51,7 @@
             this.btnRestoreBackups = new System.Windows.Forms.Button();
             this.btnExtractFiles = new System.Windows.Forms.Button();
             this.rtfLog = new System.Windows.Forms.RichTextBox();
+            this.timer1 = new System.Windows.Forms.Timer(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.numThreads)).BeginInit();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -133,7 +135,6 @@
             // chkOnlyCustomTextures
             // 
             this.chkOnlyCustomTextures.AutoSize = true;
-            this.chkOnlyCustomTextures.Enabled = false;
             this.chkOnlyCustomTextures.Location = new System.Drawing.Point(33, 42);
             this.chkOnlyCustomTextures.Name = "chkOnlyCustomTextures";
             this.chkOnlyCustomTextures.Size = new System.Drawing.Size(144, 17);
@@ -144,7 +145,6 @@
             // chkRandomizeUiTextures
             // 
             this.chkRandomizeUiTextures.AutoSize = true;
-            this.chkRandomizeUiTextures.Enabled = false;
             this.chkRandomizeUiTextures.Location = new System.Drawing.Point(33, 65);
             this.chkRandomizeUiTextures.Name = "chkRandomizeUiTextures";
             this.chkRandomizeUiTextures.Size = new System.Drawing.Size(133, 17);
@@ -166,7 +166,6 @@
             // chkOnlyCustomSounds
             // 
             this.chkOnlyCustomSounds.AutoSize = true;
-            this.chkOnlyCustomSounds.Enabled = false;
             this.chkOnlyCustomSounds.Location = new System.Drawing.Point(192, 42);
             this.chkOnlyCustomSounds.Name = "chkOnlyCustomSounds";
             this.chkOnlyCustomSounds.Size = new System.Drawing.Size(141, 17);
@@ -275,6 +274,11 @@
             this.rtfLog.TabIndex = 61;
             this.rtfLog.Text = "";
             // 
+            // timer1
+            // 
+            this.timer1.Enabled = true;
+            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -329,6 +333,7 @@
         private System.Windows.Forms.Button btnRestoreBackups;
         private System.Windows.Forms.Button btnExtractFiles;
         private System.Windows.Forms.RichTextBox rtfLog;
+        private System.Windows.Forms.Timer timer1;
     }
 }
 
