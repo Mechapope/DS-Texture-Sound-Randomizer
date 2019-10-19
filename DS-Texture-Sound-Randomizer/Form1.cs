@@ -819,6 +819,13 @@ namespace DS_Texture_Sound_Randomizer
             }           
         }
 
+        private void button1_Click(object sender, EventArgs e)
+        {
+            gameDirectory = @"D:\Program Files (x86)\Steam\steamapps\common\Dark Souls Prepare to Die Edition\DATA";
+            spup = new SPUP();
+            spup.Repack(gameDirectory + "\\TextSoundRando\\Temp\\Sounds", 1, gameDirectory);
+        }
+
         private void FixMainSoundFile()
         {
             LogMessage("Checking main sound file");
@@ -826,7 +833,7 @@ namespace DS_Texture_Sound_Randomizer
             bool isValid = false;
             string mainSoundFileFolder = gameDirectory + "\\TextSoundRando\\Temp\\Sounds\\frpg_main.fsb";
             
-            if (File.Exists(mainSoundFileFolder + "\\frpg_main.fsb"))
+            if (File.Exists(gameDirectory + "\\TextSoundRando\\Output\\Sounds\\frpg_main.fsb"))
             {
                 long mainFileSize = new FileInfo(mainSoundFileFolder + "\\frpg_main.fsb").Length;
                 if(mainFileSize > minMainSoundFileSize && mainFileSize < maxMainSoundFileSize)
@@ -904,7 +911,7 @@ namespace DS_Texture_Sound_Randomizer
                 spupThread.Start();
                 spupThread.Join();
 
-                long mainFileSize = new FileInfo(gameDirectory + "TextSoundRando\\Output\\sound\\frpg_main.fsb").Length;
+                long mainFileSize = new FileInfo(gameDirectory + "\\TextSoundRando\\Output\\sound\\frpg_main.fsb").Length;
 
                 if (File.Exists(mainSoundFileFolder + "\\frpg_main.fsb") && mainFileSize > minMainSoundFileSize && mainFileSize < maxMainSoundFileSize)
                 {

@@ -73,6 +73,21 @@ namespace DS_Texture_Sound_Randomizer
                 {
                     process.WaitForExit();
                 }
+
+                //one fsb keep extracting as .wav instead of .wav.mp3 which ruins everything
+                foreach (string file in Directory.EnumerateFiles(unpackDirectory, "*.wav"))
+                {
+                    File.Copy(file, file + ".mp3");
+                    File.Delete(file);
+                }
+
+                using (StreamWriter sw = new StreamWriter(unpackDirectory + "\\fsblist.lst"))
+                {
+                    foreach (string file in Directory.EnumerateFiles(unpackDirectory, "*.mp3"))
+                    {
+                        sw.WriteLine(Path.GetFileName(file));
+                    }
+                }
             }
         }
 
@@ -98,6 +113,7 @@ namespace DS_Texture_Sound_Randomizer
 
                 if (!Directory.Exists(cloneDirectory))
                 {
+                    Directory.CreateDirectory(Path.Combine(cloneDirectory + "\\FSBViewer"));
                     Directory.CreateDirectory(Path.Combine(cloneDirectory + "\\INPUT"));
                     Directory.CreateDirectory(Path.Combine(cloneDirectory + "\\OUTPUT"));
 
@@ -132,25 +148,18 @@ namespace DS_Texture_Sound_Randomizer
 
                 foreach (var file in Directory.GetFiles(filepath))
                 {
-                    File.Copy(file, dssiPath + "\\input\\" + Path.GetFileName(file));
+                    File.Copy(file, dssiPath + "\\input\\" + Path.GetFileName(file), true);
                 }
                 //wait a short time or else youll get file access error sometimes
                 Thread.Sleep(5000);
 
-                ProcessStartInfo startInfo = new ProcessStartInfo(dssiPath + "\\DSSI.bat");
-                startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                startInfo.WorkingDirectory = dssiPath;
+                //runProcess(dssiPath, "listrearranger.exe", Path.GetFileName(filepath));
+                string baseDir = @"D:\Program Files (x86)\Steam\steamapps\common\Dark Souls Prepare to Die Edition\DATA\TextSoundRando\Binaries\DSSI0";
 
-                using (Process process = Process.Start(startInfo))
-                {
-                    //sometimes it just gets stuck because it sucks
-                    if(!process.WaitForExit(timeOut))
-                    {
-                        process.Kill();
-                        //requeue path and maybe itll work next time
-                        filepaths.Enqueue(filepath);
-                    }
-                }
+                runProcess(baseDir, "listrearranger.exe", Path.GetFileName(filepath));
+                runProcess(baseDir, "fsbankcl.exe", @"-o OUTPUT\asd.fsb -f mp3 -q 50 INPUT\fsblist.lst");
+                runProcess(baseDir, "inserter.exe", Path.GetFileName(filepath));
+
                 //wait a short time or else youll get file access error sometimes
                 Thread.Sleep(5000);
 
@@ -166,6 +175,21 @@ namespace DS_Texture_Sound_Randomizer
                 {
                     File.Delete(file);
                 }
+            }
+        }
+
+        private void runProcess(string directory, string fileName, string arguments)
+        {
+            ProcessStartInfo info = new ProcessStartInfo();
+            info.FileName = fileName;
+            info.WorkingDirectory = directory;
+            info.Arguments = arguments;
+            info.CreateNoWindow = true;
+            info.WindowStyle = ProcessWindowStyle.Hidden;
+
+            using (Process p = Process.Start(info))
+            {
+                p.WaitForExit();
             }
         }
 
