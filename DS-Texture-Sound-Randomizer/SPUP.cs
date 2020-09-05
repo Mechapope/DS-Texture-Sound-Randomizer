@@ -56,7 +56,7 @@ namespace DS_Texture_Sound_Randomizer
             {
                 Log.Enqueue("Unpacking sound file " + (fileCount - filepaths.Count) + " of " + fileCount);
 
-                string unpackDirectory = gameDirectory + @"\TextSoundRando\Unpack\Sounds\" + Path.GetFileName(filepath);
+                string unpackDirectory = gameDirectory + @"\TextSoundRando\Unpack\Sound\" + Path.GetFileName(filepath);
 
                 Directory.CreateDirectory(unpackDirectory);
 
@@ -97,6 +97,11 @@ namespace DS_Texture_Sound_Randomizer
             ConcurrentQueue<string> filepaths = new ConcurrentQueue<string>();
             Log = new ConcurrentQueue<string>();
 
+            if(directoryToRepack == gameDirectory + "\\TextSoundRando\\Temp\\Sound\\frpg_main.fsb")
+            {
+                filepaths.Enqueue(gameDirectory + "\\TextSoundRando\\Temp\\Sound\\frpg_main.fsb");
+            }
+
             foreach (string filepath in Directory.EnumerateDirectories(directoryToRepack))
             {
                 filepaths.Enqueue(filepath);
@@ -104,36 +109,46 @@ namespace DS_Texture_Sound_Randomizer
 
             fileCount = filepaths.Count;
 
-            Thread[] threads = new Thread[numThreads];
-            string masterDssi = gameDirectory + "\\TextSoundRando\\Binaries\\DSSI";
-
-            for (int i = 0; i < threads.Length; i++)
+            if(!Directory.Exists(gameDirectory + "\\TextSoundRando\\Output\\sound"))
             {
-                string cloneDirectory = masterDssi + i.ToString();
-
-                if (!Directory.Exists(cloneDirectory))
-                {
-                    Directory.CreateDirectory(Path.Combine(cloneDirectory + "\\FSBViewer"));
-                    Directory.CreateDirectory(Path.Combine(cloneDirectory + "\\INPUT"));
-                    Directory.CreateDirectory(Path.Combine(cloneDirectory + "\\OUTPUT"));
-
-                    //the dumbest thing ive ever coded - make copies of dssi in different folders so this runs faster
-                    foreach (var item in Directory.EnumerateFiles(masterDssi, "*", SearchOption.AllDirectories))
-                    {
-                        File.Copy(item, Path.Combine(cloneDirectory + "\\" + item.Substring(masterDssi.Length + 1)));
-                    }
-                }
-
-                Thread thread = new Thread(() => RepackFSBs2(cloneDirectory, filepaths, filepaths.Count));
-                threads[i] = thread;
-                thread.Start();
+                Directory.CreateDirectory(gameDirectory + "\\TextSoundRando\\Output\\sound");
             }
 
-            foreach (Thread thread in threads)
-                thread.Join();
+            //Thread[] threads = new Thread[numThreads];
+            //string masterDssi = gameDirectory + "\\TextSoundRando\\Binaries\\DSSI";
+
+            //for (int i = 0; i < threads.Length; i++)
+            //{
+            //    string cloneDirectory = masterDssi + i.ToString();
+
+            //    if (!Directory.Exists(cloneDirectory))
+            //    {
+            //        Directory.CreateDirectory(Path.Combine(cloneDirectory + "\\FSBViewer"));
+            //        Directory.CreateDirectory(Path.Combine(cloneDirectory + "\\INPUT"));
+            //        Directory.CreateDirectory(Path.Combine(cloneDirectory + "\\OUTPUT"));
+
+            //        //the dumbest thing ive ever coded - make copies of dssi in different folders so this runs faster
+            //        foreach (var item in Directory.EnumerateFiles(masterDssi, "*", SearchOption.AllDirectories))
+            //        {
+            //            File.Copy(item, Path.Combine(cloneDirectory + "\\" + item.Substring(masterDssi.Length + 1)));
+            //        }
+            //    }
+
+            //    Thread thread = new Thread(() => RepackFSBs2(cloneDirectory, filepaths, filepaths.Count));
+            //    threads[i] = thread;
+            //    thread.Start();
+            //}
+
+            //foreach (Thread thread in threads)
+            //    thread.Join();
+
+            Thread thread = new Thread(() => RepackFSBs2(gameDirectory + "\\TextSoundRando\\Binaries\\DSSI", filepaths, filepaths.Count));
+            thread.Start();
+            thread.Join();
+
 
             //copy the files into the sound directory
-            foreach (string fsbFile in Directory.EnumerateFiles(gameDirectory + "\\TextSoundRando\\Temp\\Sounds", "*.fsb", SearchOption.AllDirectories))
+            foreach (string fsbFile in Directory.EnumerateFiles(gameDirectory + "\\TextSoundRando\\Temp\\Sound", "*.fsb", SearchOption.AllDirectories))
             {
                 File.Copy(fsbFile, gameDirectory + "\\TextSoundRando\\Output\\sound\\" + Path.GetFileName(fsbFile), true);
             }
@@ -141,6 +156,17 @@ namespace DS_Texture_Sound_Randomizer
 
         private void RepackFSBs2(string dssiPath, ConcurrentQueue<string> filepaths, int totalAmount)
         {
+            //make sure dssi input/output folders are clear
+            foreach (var file in Directory.GetFiles(dssiPath + "\\input"))
+            {
+                File.Delete(file);
+            }
+
+            foreach (var file in Directory.GetFiles(dssiPath + "\\output"))
+            {
+                File.Delete(file);
+            }
+
             string filepath;
             while (filepaths.TryDequeue(out filepath))
             {
@@ -154,7 +180,7 @@ namespace DS_Texture_Sound_Randomizer
                 Thread.Sleep(5000);
 
                 //runProcess(dssiPath, "listrearranger.exe", Path.GetFileName(filepath));
-                string baseDir = @"D:\Program Files (x86)\Steam\steamapps\common\Dark Souls Prepare to Die Edition\DATA\TextSoundRando\Binaries\DSSI0";
+                string baseDir = @"D:\Program Files (x86)\Steam\steamapps\common\Dark Souls Prepare to Die Edition\DATA\TextSoundRando\Binaries\DSSI";
 
                 runProcess(baseDir, "listrearranger.exe", Path.GetFileName(filepath));
                 runProcess(baseDir, "fsbankcl.exe", @"-o OUTPUT\asd.fsb -f mp3 -q 50 INPUT\fsblist.lst");
@@ -163,7 +189,7 @@ namespace DS_Texture_Sound_Randomizer
                 //wait a short time or else youll get file access error sometimes
                 Thread.Sleep(5000);
 
-                File.Copy(dssiPath + "\\output\\" + Path.GetFileName(filepath), gameDirectory + "\\TextSoundRando\\Output\\Sound\\" + Path.GetFileName(filepath), true);
+                File.Copy(dssiPath + "\\output\\" + Path.GetFileName(filepath), gameDirectory + "\\TextSoundRando\\Temp\\Sound\\" + Path.GetFileName(filepath) + "\\" + Path.GetFileName(filepath), true);
 
                 //clear input + output folder
                 foreach (var file in Directory.GetFiles(dssiPath + "\\input"))

@@ -76,7 +76,7 @@ namespace DS_Texture_Sound_Randomizer
                 LogMessage("Backups found.");
             }
 
-            if (File.Exists(gameDirectory + @"\TextSoundRando\Unpack\Sounds\frpg_xm18.fsb\y1800.wav.mp3"))
+            if (File.Exists(gameDirectory + @"\TextSoundRando\Unpack\Sound\frpg_xm18.fsb\y1800.wav.mp3"))
             {
                 isGameUnpacked = true;
                 btnExtractFiles.Enabled = false;
@@ -91,6 +91,8 @@ namespace DS_Texture_Sound_Randomizer
                 numThreads.Value = cores - 1;
             else
                 numThreads.Value = 1;
+
+            numThreads.Value = 1;
         }
         
         private void btnGamePathSelect_Click(object sender, EventArgs e)
@@ -129,7 +131,7 @@ namespace DS_Texture_Sound_Randomizer
                     btnRestoreBackups.Enabled = false;
                 }
 
-                if (File.Exists(gameDirectory + @"\TextSoundRando\Unpack\Sounds\frpg_xm18.fsb\y1800.wav.mp3"))
+                if (File.Exists(gameDirectory + @"\TextSoundRando\Unpack\Sound\frpg_xm18.fsb\y1800.wav.mp3"))
                 {
                     isGameUnpacked = true;
                     btnExtractFiles.Enabled = false;
@@ -253,6 +255,8 @@ namespace DS_Texture_Sound_Randomizer
             UnpackTextures();
             UnpackSounds();
 
+            LogMessage("File extraction complete.");
+
             isGameUnpacked = true;
             btnExtractFiles.Enabled = false;
         }
@@ -287,7 +291,7 @@ namespace DS_Texture_Sound_Randomizer
                 FixMainSoundFile();
             }
 
-            ClearTempFolder();
+            //ClearTempFolder();
 
             LogMessage("Randomizing complete!");
         }
@@ -358,12 +362,12 @@ namespace DS_Texture_Sound_Randomizer
                 Directory.Delete(gameDirectory + "\\TextSoundRando\\Temp\\Textures", true);
             }
 
-            if (Directory.Exists(gameDirectory + "\\TextSoundRando\\Temp\\Sounds"))
+            if (Directory.Exists(gameDirectory + "\\TextSoundRando\\Temp\\Sound"))
             {
-                Directory.Delete(gameDirectory + "\\TextSoundRando\\Temp\\Sounds", true);
+                Directory.Delete(gameDirectory + "\\TextSoundRando\\Temp\\Sound", true);
             }           
             
-            Directory.CreateDirectory(gameDirectory + "\\TextSoundRando\\Temp\\Sounds");
+            Directory.CreateDirectory(gameDirectory + "\\TextSoundRando\\Temp\\Sound");
             Directory.CreateDirectory(gameDirectory + "\\TextSoundRando\\Temp\\Textures");
         }
 
@@ -544,7 +548,7 @@ namespace DS_Texture_Sound_Randomizer
         private void UnpackSounds()
         {
             spup = new SPUP();
-            spupThread = new Thread(() => spup.Unpack(gameDirectory + "\\TextSoundRando\\Unpack\\Sounds", threadCount, gameDirectory));
+            spupThread = new Thread(() => spup.Unpack(gameDirectory + "\\TextSoundRando\\Unpack\\Sound", threadCount, gameDirectory));
             spupThread.Start();
             spupThread.Join();
         }
@@ -554,7 +558,7 @@ namespace DS_Texture_Sound_Randomizer
             string filepath;
             while (filepaths.TryDequeue(out filepath))
             {
-                string unpackDirectory = gameDirectory + @"\TextSoundRando\Unpack\Sounds\" + Path.GetFileName(filepath);
+                string unpackDirectory = gameDirectory + @"\TextSoundRando\Unpack\Sound\" + Path.GetFileName(filepath);
 
                 Directory.CreateDirectory(unpackDirectory);
 
@@ -574,16 +578,13 @@ namespace DS_Texture_Sound_Randomizer
             }
         }
 
-
-
         private void RandomizeSounds()
         {
             LogMessage("Randomizing sounds.");
 
             using (StreamWriter sw = new StreamWriter(gameDirectory + @"\TextSoundRando\soundMaps.csv"))
             {
-                string inputFolder = gameDirectory + @"\TextSoundRando\Unpack\Sounds";
-
+                string inputFolder = gameDirectory + @"\TextSoundRando\Unpack\Sound";
 
                 List<string> smallSoundFiles, mediumSoundFiles, largeSoundFiles;
 
@@ -593,7 +594,7 @@ namespace DS_Texture_Sound_Randomizer
 
                 foreach (string directory in Directory.EnumerateDirectories(inputFolder, "*", SearchOption.AllDirectories))
                 {
-                    string tempDirectory = Path.Combine(gameDirectory + @"\TextSoundRando\Temp\Sounds\", Path.GetFileName(directory));
+                    string tempDirectory = Path.Combine(gameDirectory + @"\TextSoundRando\Temp\Sound\", Path.GetFileName(directory));
                     Directory.CreateDirectory(tempDirectory);
 
                     foreach (string file in Directory.GetFiles(directory))
@@ -656,7 +657,7 @@ namespace DS_Texture_Sound_Randomizer
             mediumSoundFiles = new List<string>();
             largeSoundFiles = new List<string>();
 
-            string[] soundDirs = { "\\TextSoundRando\\Custom Sounds", "\\TextSoundRando\\Unpack\\Sounds" };
+            string[] soundDirs = { "\\TextSoundRando\\Custom Sounds", "\\TextSoundRando\\Unpack\\Sound" };
 
             for (int i = 0; i < soundDirs.Length; i++)
             {
@@ -705,18 +706,19 @@ namespace DS_Texture_Sound_Randomizer
         private void RepackSounds()
         {
             spup = new SPUP();
-            spupThread = new Thread(() => spup.Repack(gameDirectory + "\\TextSoundRando\\Temp\\Sounds", threadCount, gameDirectory));
+            spupThread = new Thread(() => spup.Repack(gameDirectory + "\\TextSoundRando\\Temp\\Sound", threadCount, gameDirectory));
             spupThread.Start();
             spupThread.Join();
         }
 
+        //unused?
         private void RepackFSBs(ConcurrentQueue<string> filepaths)
         {
             //TODO check if fsbext actually sounds correct
             string filepath;
             while (filepaths.TryDequeue(out filepath))
             {
-                string unpackDirectory = gameDirectory + @"\TextSoundRando\Temp\Sounds\" + Path.GetFileName(filepath);
+                string unpackDirectory = gameDirectory + @"\TextSoundRando\Temp\Sound\" + Path.GetFileName(filepath);
 
                 ProcessStartInfo startInfo = new ProcessStartInfo();
                 startInfo.WindowStyle = ProcessWindowStyle.Hidden;
@@ -732,6 +734,7 @@ namespace DS_Texture_Sound_Randomizer
             }
         }
 
+        //unused?
         private void RepackFSBs2(string dssiPath, ConcurrentQueue<string> filepaths, int totalAmount)
         {
             string filepath;
@@ -831,12 +834,12 @@ namespace DS_Texture_Sound_Randomizer
             LogMessage("Checking main sound file");
 
             bool isValid = false;
-            string mainSoundFileFolder = gameDirectory + "\\TextSoundRando\\Temp\\Sounds\\frpg_main.fsb";
+            string mainSoundFileFolder = gameDirectory + "\\TextSoundRando\\Temp\\Sound\\frpg_main.fsb";
             
-            if (File.Exists(gameDirectory + "\\TextSoundRando\\Output\\Sounds\\frpg_main.fsb"))
+            if (File.Exists(gameDirectory + "\\TextSoundRando\\Output\\Sound\\frpg_main.fsb"))
             {
-                long mainFileSize = new FileInfo(mainSoundFileFolder + "\\frpg_main.fsb").Length;
-                if(mainFileSize > minMainSoundFileSize && mainFileSize < maxMainSoundFileSize)
+                long mainFileSize = new FileInfo(gameDirectory + "\\TextSoundRando\\Output\\sound\\frpg_main.fsb").Length;
+                if (File.Exists(mainSoundFileFolder + "\\frpg_main.fsb") && mainFileSize > minMainSoundFileSize && mainFileSize < maxMainSoundFileSize)
                 {
                     isValid = true;
                 }
@@ -861,7 +864,7 @@ namespace DS_Texture_Sound_Randomizer
                 //cant use seed for fixing main file or itll just give the same files over
                 Random r = new Random();
 
-                foreach (string file in Directory.GetFiles(gameDirectory + "\\TextSoundRando\\Unpack\\Sounds\\frpg_main.fsb"))
+                foreach (string file in Directory.GetFiles(gameDirectory + "\\TextSoundRando\\Unpack\\Sound\\frpg_main.fsb"))
                 {
                     if (CheckIsValidSoundForSwapping(file))
                     {
@@ -907,15 +910,17 @@ namespace DS_Texture_Sound_Randomizer
                 }
 
                 spup = new SPUP();
-                spupThread = new Thread(() => spup.Repack(gameDirectory + "\\TextSoundRando\\Temp\\Sounds\\frpg_main.fsb", 1, gameDirectory));
+                spupThread = new Thread(() => spup.Repack(gameDirectory + "\\TextSoundRando\\Temp\\Sound\\frpg_main.fsb", 1, gameDirectory));
                 spupThread.Start();
-                spupThread.Join();
+                spupThread.Join();                
 
-                long mainFileSize = new FileInfo(gameDirectory + "\\TextSoundRando\\Output\\sound\\frpg_main.fsb").Length;
-
-                if (File.Exists(mainSoundFileFolder + "\\frpg_main.fsb") && mainFileSize > minMainSoundFileSize && mainFileSize < maxMainSoundFileSize)
+                if (File.Exists(mainSoundFileFolder + "\\frpg_main.fsb"))
                 {
-                    isValid = true;
+                    long mainFileSize = new FileInfo(mainSoundFileFolder + "\\frpg_main.fsb").Length;
+                    if(mainFileSize > minMainSoundFileSize && mainFileSize < maxMainSoundFileSize)
+                    {
+                        isValid = true;
+                    }                    
                 }
             }
 
