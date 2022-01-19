@@ -31,7 +31,7 @@ namespace DS_Texture_Sound_Randomizer
         int maxMainSoundFileSize = 8400000;
 
         int seed = 0;
-        int threadCount;
+        int threadCount = 1;
         bool isBackupsExist = false;
         bool isGameUnpacked = false;
         bool randomizeTextures, onlyCustomTextures, randomizeUiTextures, randomizeSounds, onlyCustomSounds;
@@ -82,17 +82,6 @@ namespace DS_Texture_Sound_Randomizer
                 btnExtractFiles.Enabled = false;
                 LogMessage("Extracted game files found.");
             }
-
-            int cores = Environment.ProcessorCount;
-
-            if (cores > 4)
-                numThreads.Value = cores - 2;
-            else if (cores > 1)
-                numThreads.Value = cores - 1;
-            else
-                numThreads.Value = 1;
-
-            numThreads.Value = 1;
         }
         
         private void btnGamePathSelect_Click(object sender, EventArgs e)
@@ -250,8 +239,6 @@ namespace DS_Texture_Sound_Randomizer
 
         private void btnExtractFiles_Click(object sender, EventArgs e)
         {
-            threadCount = (int)numThreads.Value;
-
             UnpackTextures();
             UnpackSounds();
 
@@ -263,8 +250,6 @@ namespace DS_Texture_Sound_Randomizer
 
         private void btnSubmit_Click(object sender, EventArgs e)
         {
-            threadCount = (int)numThreads.Value;
-
             if (!ValidateInput())
             {
                 return;
@@ -553,31 +538,6 @@ namespace DS_Texture_Sound_Randomizer
             spupThread.Join();
         }
 
-        private void UnpackFSBs(ConcurrentQueue<string> filepaths)
-        {
-            string filepath;
-            while (filepaths.TryDequeue(out filepath))
-            {
-                string unpackDirectory = gameDirectory + @"\TextSoundRando\Unpack\Sound\" + Path.GetFileName(filepath);
-
-                Directory.CreateDirectory(unpackDirectory);
-
-                File.Copy(filepath, unpackDirectory + "\\" + Path.GetFileName(filepath));
-
-                ProcessStartInfo startInfo = new ProcessStartInfo();
-                startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                startInfo.FileName = "cmd.exe";
-                startInfo.WorkingDirectory = gameDirectory + @"\TextSoundRando\Binaries\fsbext";
-                startInfo.Arguments = $"/C fsbext -d \"{unpackDirectory}\" \"{filepath}\"";
-
-                //run fsbext on each fsb file
-                using (Process process = Process.Start(startInfo))
-                {
-                    process.WaitForExit();
-                }
-            }
-        }
-
         private void RandomizeSounds()
         {
             LogMessage("Randomizing sounds.");
@@ -711,68 +671,6 @@ namespace DS_Texture_Sound_Randomizer
             spupThread.Join();
         }
 
-        //unused?
-        private void RepackFSBs(ConcurrentQueue<string> filepaths)
-        {
-            //TODO check if fsbext actually sounds correct
-            string filepath;
-            while (filepaths.TryDequeue(out filepath))
-            {
-                string unpackDirectory = gameDirectory + @"\TextSoundRando\Temp\Sound\" + Path.GetFileName(filepath);
-
-                ProcessStartInfo startInfo = new ProcessStartInfo();
-                startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                startInfo.FileName = "cmd.exe";
-                startInfo.WorkingDirectory = gameDirectory + @"\TextSoundRando\Binaries\fsbext";
-                startInfo.Arguments = $"/C fsbext -d \"{unpackDirectory}\" -r \"{unpackDirectory + "\\" + filepath}\"";
-
-                //run fsbext on each fsb file
-                using (Process process = Process.Start(startInfo))
-                {
-                    process.WaitForExit();
-                }
-            }
-        }
-
-        //unused?
-        private void RepackFSBs2(string dssiPath, ConcurrentQueue<string> filepaths, int totalAmount)
-        {
-            string filepath;
-            while (filepaths.TryDequeue(out filepath))
-            {
-                logQueue.Enqueue("Repacking sound file" + (totalAmount - filepaths.Count) + " of " + totalAmount);
-
-                foreach (var file in Directory.GetFiles(filepath))
-                {
-                    File.Copy(file, dssiPath + "\\input\\" + Path.GetFileName(file));
-                }
-
-                //wait a short time or else youll get file access error sometimes
-                Thread.Sleep(5000);
-
-                ProcessStartInfo startInfo = new ProcessStartInfo(dssiPath + "\\DSSI.bat");
-                startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                startInfo.WorkingDirectory = dssiPath;
-
-                using(Process process = Process.Start(startInfo))
-                {
-                    process.WaitForExit();
-                }
-
-                //wait a short time or else youll get file access error sometimes
-                Thread.Sleep(5000);
-
-                //clear input folder
-                foreach (var file in Directory.GetFiles(dssiPath + "\\input"))
-                {
-                    File.Delete(file);
-                }
-
-                File.Copy(dssiPath + "\\output\\" + Path.GetFileName(filepath), gameDirectory + "\\TextSoundRando\\Output\\Sound\\" + Path.GetFileName(filepath), true);
-                File.Delete(dssiPath + "\\output\\" + Path.GetFileName(filepath));
-            }
-        }
-
         private void timer1_Tick(object sender, EventArgs e)
         {
             if (mpupThread != null)
@@ -822,11 +720,25 @@ namespace DS_Texture_Sound_Randomizer
             }           
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void btnOpenOutputFolder_Click(object sender, EventArgs e)
         {
-            gameDirectory = @"D:\Program Files (x86)\Steam\steamapps\common\Dark Souls Prepare to Die Edition\DATA";
-            spup = new SPUP();
-            spup.Repack(gameDirectory + "\\TextSoundRando\\Temp\\Sounds", 1, gameDirectory);
+            if (txtGamePath.Text == "")
+            {
+                LogError("Please set your game path first.");
+            }
+            else if (!File.Exists(gameDirectory + "\\DARKSOULS.exe"))
+            {
+                LogError("Not a valid Data directory.");
+            }
+            else
+            {
+                if (!Directory.Exists(gameDirectory + @"\TextSoundRando\Output"))
+                {
+                    Directory.CreateDirectory((gameDirectory + @"\TextSoundRando\Output"));
+                }
+
+                Process.Start(gameDirectory + @"\TextSoundRando\Output");
+            }
         }
 
         private void FixMainSoundFile()

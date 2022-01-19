@@ -114,34 +114,6 @@ namespace DS_Texture_Sound_Randomizer
                 Directory.CreateDirectory(gameDirectory + "\\TextSoundRando\\Output\\sound");
             }
 
-            //Thread[] threads = new Thread[numThreads];
-            //string masterDssi = gameDirectory + "\\TextSoundRando\\Binaries\\DSSI";
-
-            //for (int i = 0; i < threads.Length; i++)
-            //{
-            //    string cloneDirectory = masterDssi + i.ToString();
-
-            //    if (!Directory.Exists(cloneDirectory))
-            //    {
-            //        Directory.CreateDirectory(Path.Combine(cloneDirectory + "\\FSBViewer"));
-            //        Directory.CreateDirectory(Path.Combine(cloneDirectory + "\\INPUT"));
-            //        Directory.CreateDirectory(Path.Combine(cloneDirectory + "\\OUTPUT"));
-
-            //        //the dumbest thing ive ever coded - make copies of dssi in different folders so this runs faster
-            //        foreach (var item in Directory.EnumerateFiles(masterDssi, "*", SearchOption.AllDirectories))
-            //        {
-            //            File.Copy(item, Path.Combine(cloneDirectory + "\\" + item.Substring(masterDssi.Length + 1)));
-            //        }
-            //    }
-
-            //    Thread thread = new Thread(() => RepackFSBs2(cloneDirectory, filepaths, filepaths.Count));
-            //    threads[i] = thread;
-            //    thread.Start();
-            //}
-
-            //foreach (Thread thread in threads)
-            //    thread.Join();
-
             Thread thread = new Thread(() => RepackFSBs2(gameDirectory + "\\TextSoundRando\\Binaries\\DSSI", filepaths, filepaths.Count));
             thread.Start();
             thread.Join();
@@ -179,12 +151,9 @@ namespace DS_Texture_Sound_Randomizer
                 //wait a short time or else youll get file access error sometimes
                 Thread.Sleep(5000);
 
-                //runProcess(dssiPath, "listrearranger.exe", Path.GetFileName(filepath));
-                string baseDir = @"D:\Program Files (x86)\Steam\steamapps\common\Dark Souls Prepare to Die Edition\DATA\TextSoundRando\Binaries\DSSI";
-
-                runProcess(baseDir, "listrearranger.exe", Path.GetFileName(filepath));
-                runProcess(baseDir, "fsbankcl.exe", @"-o OUTPUT\asd.fsb -f mp3 -q 50 INPUT\fsblist.lst");
-                runProcess(baseDir, "inserter.exe", Path.GetFileName(filepath));
+                runProcess(dssiPath, "listrearranger.exe", Path.GetFileName(filepath));
+                runProcess(dssiPath, "fsbankcl.exe", @"-o OUTPUT\asd.fsb -f mp3 -q 50 INPUT\fsblist.lst");
+                runProcess(dssiPath, "inserter.exe", Path.GetFileName(filepath));
 
                 //wait a short time or else youll get file access error sometimes
                 Thread.Sleep(5000);
